@@ -1,0 +1,18 @@
+{
+  "FixedFileInfo": {
+    "FileVersion": {
+      "Major": 1, "Minor": 0, "Patch": 0, "Build": 0
+    },
+    "ProductVersion": {
+      "Major": 1, "Minor": 0, "Patch": 0, "Build": 0
+    }
+  },
+  "StringFileInfo": {
+    "CompanyName": "Akash",
+    "FileDescription": "CrossBoard - Clipboard Bridge",
+    "FileVersion": "1.0.0",
+    "ProductName": "CrossBoard",
+    "ProductVersion": "1.0.0"
+  },
+  "IconPath": "crossboard_icon.ico"
+}

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrossBoard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00ffe0;
+    --accent2: #ff6b35;
+    --text: #e0e0f0;
+    --muted: #555570;
+    --success: #00e676;
+    --error: #ff4757;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,224,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,224,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 52px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 2.4rem;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+
+  .logo span {
+    color: var(--accent);
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 99px;
+    transition: all 0.3s;
+  }
+
+  .status-pill.ok { color: var(--success); border-color: var(--success); }
+  .status-pill.fail { color: var(--error); border-color: var(--error); }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card:nth-child(2) { animation-delay: 0.05s; }
+  .card:nth-child(3) { animation-delay: 0.1s; }
+
+  .card-label {
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  /* Textarea */
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    padding: 16px;
+    resize: vertical;
+    min-height: 140px;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted); }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 3px;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+
+  .btn-primary:hover {
+    background: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 0 20px rgba(0,255,224,0.3);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+  }
+
+  .btn-danger:hover { color: var(--error); border-color: var(--error); }
+
+  button:active { transform: scale(0.97); }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    font-size: 0.78rem;
+    border-radius: 3px;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 999;
+    max-width: 300px;
+  }
+
+  #toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  #toast.success { border-color: var(--success); color: var(--success); }
+  #toast.error   { border-color: var(--error);   color: var(--error); }
+  #toast.info    { border-color: var(--accent);   color: var(--accent); }
+
+  /* Fetched content display */
+  .content-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px;
+    font-size: 0.88rem;
+    min-height: 60px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text);
+    line-height: 1.7;
+    margin-top: 14px;
+    position: relative;
+  }
+
+  .content-box.empty { color: var(--muted); font-style: italic; }
+
+  .content-box-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* Divider */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  .hint {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 48px;
+    letter-spacing: 2px;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 28px 16px; }
+
+    header { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 32px; }
+
+    .logo { font-size: 1.8rem; }
+
+    .card { padding: 20px 16px; }
+
+    .btn-row { flex-direction: column; }
+
+    .btn-row button, .btn-primary, .btn-secondary, .btn-danger {
+      width: 100%;
+      text-align: center;
+    }
+
+    .content-box-actions { flex-direction: column; }
+
+    .content-box-actions button { width: 100%; text-align: center; }
+
+    textarea { font-size: 0.85rem; min-height: 110px; }
+
+    #toast { left: 16px; right: 16px; bottom: 16px; max-width: unset; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">Cross<span>Board</span></div>
+    <div class="status-pill" id="statusPill">
+      <div class="dot"></div>
+      <span id="statusText">checking...</span>
+    </div>
+  </header>
+
+  <!-- GET Clipboard -->
+  <div class="card">
+    <div class="card-label">// pull from device</div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-bottom:14px;">Fetch what's currently on the server clipboard.</p>
+    <button class="btn-primary" onclick="fetchClipboard()">GET CLIPBOARD</button>
+    <div class="content-box empty" id="fetchedContent">— nothing fetched yet —</div>
+    <div class="content-box-actions" id="fetchedActions" style="display:none">
+      <button class="btn-secondary" onclick="copyFetchedToLocal()">COPY TO MY CLIPBOARD</button>
+      <button class="btn-secondary" onclick="loadIntoSend()">EDIT & RESEND</button>
+    </div>
+  </div>
+
+  <!-- SEND Clipboard -->
+  <div class="card">
+    <div class="card-label">// push to device</div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-bottom:14px;">Write or paste content to send to the server clipboard.</p>
+    <textarea id="sendContent" placeholder="Paste or type content here..."></textarea>
+    <div class="hint">Tip: Ctrl+V to paste from your local clipboard directly.</div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="sendClipboard()">SEND TO CLIPBOARD</button>
+      <button class="btn-secondary" onclick="pasteFromLocal()">PASTE FROM MY CLIPBOARD</button>
+      <button class="btn-danger" onclick="clearSend()">CLEAR</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<footer>CROSSBOARD · LOCAL CLIPBOARD BRIDGE</footer>
+
+<script>
+  const BASE = window.location.origin;
+
+  // ── Health check on load ──────────────────────────────────────────
+  async function checkHealth() {
+    try {
+      const res = await fetch(`${BASE}/health`);
+      const ok = res.ok;
+      const pill = document.getElementById('statusPill');
+      const txt  = document.getElementById('statusText');
+      pill.className = 'status-pill ' + (ok ? 'ok' : 'fail');
+      txt.textContent = ok ? 'server online' : 'server error';
+    } catch {
+      const pill = document.getElementById('statusPill');
+      pill.className = 'status-pill fail';
+      document.getElementById('statusText').textContent = 'unreachable';
+    }
+  }
+
+  // ── Fetch clipboard from server ───────────────────────────────────
+  async function fetchClipboard() {
+    try {
+      const res = await fetch(`${BASE}/clipboard`);
+      const text = await res.text();
+      const box = document.getElementById('fetchedContent');
+      if (!text || text.trim() === '') {
+        box.textContent = '— clipboard is empty —';
+        box.className = 'content-box empty';
+        document.getElementById('fetchedActions').style.display = 'none';
+      } else {
+        box.textContent = text;
+        box.className = 'content-box';
+        document.getElementById('fetchedActions').style.display = 'flex';
+      }
+      toast('Clipboard fetched', 'info');
+    } catch (e) {
+      toast('Failed to fetch clipboard', 'error');
+    }
+  }
+
+  // ── Copy fetched content to local clipboard ───────────────────────
+  async function copyFetchedToLocal() {
+    const text = document.getElementById('fetchedContent').textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Copied to your clipboard!', 'success');
+    } catch {
+      toast('Clipboard permission denied', 'error');
+    }
+  }
+
+  // ── Load fetched content into send box ────────────────────────────
+  function loadIntoSend() {
+    const text = document.getElementById('fetchedContent').textContent;
+    document.getElementById('sendContent').value = text;
+    document.getElementById('sendContent').focus();
+    toast('Loaded into editor', 'info');
+  }
+
+  // ── Send content to server clipboard ─────────────────────────────
+  async function sendClipboard() {
+    const content = document.getElementById('sendContent').value.trim();
+    if (!content) { toast('Nothing to send', 'error'); return; }
+    try {
+      const res = await fetch(`${BASE}/clipboard/send?content=${encodeURIComponent(content)}`);
+      if (res.ok) {
+        toast('Sent to server clipboard!', 'success');
+      } else {
+        toast('Send failed', 'error');
+      }
+    } catch {
+      toast('Connection error', 'error');
+    }
+  }
+
+  // ── Paste from local clipboard into textarea ──────────────────────
+  async function pasteFromLocal() {
+    try {
+      const text = await navigator.clipboard.readText();
+      document.getElementById('sendContent').value = text;
+      toast('Pasted from your clipboard', 'info');
+    } catch {
+      toast('Clipboard permission denied — use Ctrl+V', 'error');
+    }
+  }
+
+  function clearSend() {
+    document.getElementById('sendContent').value = '';
+    document.getElementById('sendContent').focus();
+  }
+
+  // ── Toast notification ────────────────────────────────────────────
+  let toastTimer;
+  function toast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────
+  checkHealth();
+  setInterval(checkHealth, 15000);
+</script>
+</body>
+</html>
