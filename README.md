@@ -16,7 +16,7 @@
 
 # CrossBoard 
 
-> CrossBoard is the only tool you need when you live and breathe code and need to ship clipboard syncing, remote input, and file transfer into your server from one tiny launcher.
+> CrossBoard is the only tool you need for clipboard syncing, remote input, and file transfer into your server from one tiny launcher.
 
 ![Status](https://img.shields.io/badge/status-POC%20%2F%20Ready-%2300ffea)
 ![License](https://img.shields.io/badge/license-MIT-%23f0db4f)
