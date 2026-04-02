@@ -21,7 +21,7 @@
 ![Status](https://img.shields.io/badge/status-POC%20%2F%20Ready-%2300ffea)
 ![License](https://img.shields.io/badge/license-MIT-%23f0db4f)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-%23008cff)
-![Download](https://img.shields.io/badge/download-crosboard.exe-%23ff6b35)
+[![Download](https://img.shields.io/badge/download-crosboard.exe-%23ff6b35)](https://github.com/Akash23q2/CrossBoard/blob/master/crossboard.exe)
 
 ---
 
