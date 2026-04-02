@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CrossBoard</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
@@ -28,7 +28,6 @@
     overflow-x: hidden;
   }
 
-  /* Grid background */
   body::before {
     content: '';
     position: fixed;
@@ -49,7 +48,6 @@
     padding: 48px 24px;
   }
 
-  /* Header */
   header {
     display: flex;
     align-items: flex-end;
@@ -65,9 +63,7 @@
     color: var(--text);
   }
 
-  .logo span {
-    color: var(--accent);
-  }
+  .logo span { color: var(--accent); }
 
   .status-pill {
     display: flex;
@@ -81,8 +77,8 @@
     transition: all 0.3s;
   }
 
-  .status-pill.ok { color: var(--success); border-color: var(--success); }
-  .status-pill.fail { color: var(--error); border-color: var(--error); }
+  .status-pill.ok   { color: var(--success); border-color: var(--success); }
+  .status-pill.fail { color: var(--error);   border-color: var(--error); }
 
   .dot {
     width: 6px; height: 6px;
@@ -96,7 +92,6 @@
     50% { opacity: 0.3; }
   }
 
-  /* Cards */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -126,7 +121,8 @@
   }
 
   .card:nth-child(2) { animation-delay: 0.05s; }
-  .card:nth-child(3) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.10s; }
+  .card:nth-child(4) { animation-delay: 0.15s; }
 
   .card-label {
     font-size: 0.65rem;
@@ -136,7 +132,6 @@
     margin-bottom: 16px;
   }
 
-  /* Textarea */
   textarea {
     width: 100%;
     background: var(--bg);
@@ -156,7 +151,6 @@
   textarea:focus { border-color: var(--accent); }
   textarea::placeholder { color: var(--muted); }
 
-  /* Buttons */
   .btn-row {
     display: flex;
     gap: 10px;
@@ -173,8 +167,6 @@
     padding: 10px 22px;
     cursor: pointer;
     transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
   }
 
   .btn-primary {
@@ -189,15 +181,96 @@
     box-shadow: 0 0 20px rgba(0,255,224,0.3);
   }
 
+  .btn-primary.active {
+    background: var(--error);
+    color: #fff;
+  }
+
   .btn-secondary {
     background: transparent;
     color: var(--text);
     border: 1px solid var(--border);
   }
 
-  .btn-secondary:hover {
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-upload {
+    width: 100%;
+    margin-top: 8px;
+    background: var(--accent);
+    color: #000;
+    border: 1px solid var(--accent);
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(0,255,224,0.15);
+  }
+
+  .btn-upload:hover {
+    background: #00ffe0;
+    border-color: #00ffe0;
+    transform: translateY(-1px);
+    box-shadow: 0 0 14px rgba(0,255,224,0.25);
+  }
+
+  .file-input {
+    width: 100%;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .file-input:hover {
     border-color: var(--accent);
-    color: var(--accent);
+    box-shadow: 0 0 12px rgba(0,255,224,0.15);
+  }
+
+  .file-input::-webkit-file-upload-button,
+  .file-input::file-selector-button {
+    background: var(--accent);
+    color: #000;
+    border: 1px solid var(--accent);
+    padding: 5px 9px;
+    border-radius: 999px;
+    margin-right: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.70rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+
+  .file-input::-webkit-file-upload-button:hover,
+  .file-input::file-selector-button:hover {
+    transform: scale(0.96);
+  }
+
+  .file-input::-webkit-file-upload-button:hover,
+  .file-input::file-selector-button:hover {
+    background: #00ffe0;
+    border-color: #00ffe0;
+  }
+
+  .file-input {
+    width: 100%;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .file-input:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(0,255,224,0.15);
   }
 
   .btn-danger {
@@ -211,7 +284,177 @@
 
   button:active { transform: scale(0.97); }
 
-  /* Toast */
+  #remoteSection { display: none; }
+  #remoteSection.visible { display: block; }
+
+  .mode-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .mode-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  #trackpad {
+    width: 100%;
+    height: 340px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+  }
+
+  #trackpad.active-touch { border-color: var(--accent); }
+
+  .click-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .click-btn {
+    padding: 14px 8px;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .click-btn:active { background: var(--accent); color: #000; transform: scale(0.97); }
+
+  #keyInput {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    caret-color: var(--accent);
+  }
+
+  #keyInput:focus { border-color: var(--accent); }
+  #keyInput::placeholder { color: var(--muted); }
+
+  .key-hint {
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .slider-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    min-width: 80px;
+  }
+
+  .slider-val {
+    font-size: 0.65rem;
+    color: var(--accent);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .ws-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 99px;
+    margin-bottom: 16px;
+  }
+
+  .ws-pill.connected    { color: var(--success); border-color: var(--success); }
+  .ws-pill.disconnected { color: var(--error);   border-color: var(--error); }
+
+  .content-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px;
+    font-size: 0.88rem;
+    min-height: 60px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text);
+    line-height: 1.7;
+    margin-top: 14px;
+  }
+
+  .content-box.empty { color: var(--muted); font-style: italic; }
+
+  .content-box-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .hint {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
   #toast {
     position: fixed;
     bottom: 28px;
@@ -228,52 +471,10 @@
     max-width: 300px;
   }
 
-  #toast.show {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
+  #toast.show    { transform: translateY(0); opacity: 1; }
   #toast.success { border-color: var(--success); color: var(--success); }
   #toast.error   { border-color: var(--error);   color: var(--error); }
   #toast.info    { border-color: var(--accent);   color: var(--accent); }
-
-  /* Fetched content display */
-  .content-box {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 16px;
-    font-size: 0.88rem;
-    min-height: 60px;
-    white-space: pre-wrap;
-    word-break: break-all;
-    color: var(--text);
-    line-height: 1.7;
-    margin-top: 14px;
-    position: relative;
-  }
-
-  .content-box.empty { color: var(--muted); font-style: italic; }
-
-  .content-box-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  /* Divider */
-  hr {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 16px 0;
-  }
-
-  .hint {
-    font-size: 0.7rem;
-    color: var(--muted);
-    margin-top: 8px;
-  }
 
   footer {
     text-align: center;
@@ -283,29 +484,58 @@
     letter-spacing: 2px;
   }
 
+  #fileList ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  #fileList li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #fileList li:last-child {
+    border-bottom: none;
+  }
+
+  .file-link {
+    color: var(--accent2);
+    text-decoration: none;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  .file-link:hover {
+    color: #ff8c42;
+    text-decoration: underline;
+  }
+
+  .file-link-dir {
+    color: var(--accent);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  .file-link-dir:hover {
+    color: #00ffff;
+    text-decoration: underline;
+  }
+
   @media (max-width: 600px) {
     .container { padding: 28px 16px; }
-
     header { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 32px; }
-
     .logo { font-size: 1.8rem; }
-
     .card { padding: 20px 16px; }
-
     .btn-row { flex-direction: column; }
-
-    .btn-row button, .btn-primary, .btn-secondary, .btn-danger {
-      width: 100%;
-      text-align: center;
-    }
-
+    .btn-row button, .btn-primary, .btn-secondary, .btn-danger { width: 100%; text-align: center; }
     .content-box-actions { flex-direction: column; }
-
     .content-box-actions button { width: 100%; text-align: center; }
-
     textarea { font-size: 0.85rem; min-height: 110px; }
-
     #toast { left: 16px; right: 16px; bottom: 16px; max-width: unset; }
+    #trackpad { height: 260px; }
   }
 </style>
 </head>
@@ -326,6 +556,9 @@
     <p style="font-size:0.82rem; color:var(--muted); margin-bottom:14px;">Fetch what's currently on the server clipboard.</p>
     <button class="btn-primary" onclick="fetchClipboard()">GET CLIPBOARD</button>
     <div class="content-box empty" id="fetchedContent">— nothing fetched yet —</div>
+    <div id="fetchedExpand" style="display:none; margin-top:6px;">
+      <button class="btn-danger" onclick="expandContent()">SHOW FULL CONTENT</button>
+    </div>
     <div class="content-box-actions" id="fetchedActions" style="display:none">
       <button class="btn-secondary" onclick="copyFetchedToLocal()">COPY TO MY CLIPBOARD</button>
       <button class="btn-secondary" onclick="loadIntoSend()">EDIT & RESEND</button>
@@ -345,96 +578,190 @@
     </div>
   </div>
 
-</div>
+  <!-- REMOTE CONTROL ENTRY -->
+  <div class="card">
+    <div class="card-label">// remote control</div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-bottom:16px;">Control your PC keyboard and mouse from this device.</p>
+    <button class="btn-primary" id="rcToggleBtn" onclick="toggleRemoteControl()">ENTER REMOTE CONTROL</button>
+  </div>
+
+  <!-- REMOTE CONTROL PANEL -->
+  <div id="remoteSection">
+    <div class="card">
+      <div class="card-label">// control panel</div>
+
+      <div class="ws-pill disconnected" id="wsPill">
+        <div class="dot"></div>
+        <span id="wsText">disconnected</span>
+      </div>
+
+      <div class="mode-row">
+        <div class="mode-btn active" id="modeKeyboard" onclick="setMode('keyboard')">KEYBOARD</div>
+        <div class="mode-btn" id="modeMouse" onclick="setMode('mouse')">TRACKPAD</div>
+      </div>
+
+      <!-- keyboard panel -->
+      <div id="keyboardPanel">
+        <input id="keyInput" type="text" placeholder="Tap to open keyboard, then type..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" style="margin-bottom:10px;">
+        <div class="key-hint" style="margin-bottom:12px;">Tap the bar to open keyboard. Special keys below.</div>
+        <div class="btn-row" style="margin-top:0;">
+          <button class="btn-secondary" onclick="sendKey('enter')">↵ ENTER</button>
+          <button class="btn-secondary" onclick="sendKey('backspace')">⌫ BACK</button>
+          <button class="btn-secondary" onclick="sendKey('tab')">⇥ TAB</button>
+          <button class="btn-secondary" onclick="sendKey('escape')">ESC</button>
+          <button class="btn-secondary" onclick="sendKey('up')">↑</button>
+          <button class="btn-secondary" onclick="sendKey('down')">↓</button>
+          <button class="btn-secondary" onclick="sendKey('left')">←</button>
+          <button class="btn-secondary" onclick="sendKey('right')">→</button>
+        </div>
+      </div>
+
+      <!-- trackpad panel -->
+      <div id="mousePanel" style="display:none;">
+        <div id="trackpad">TAP TO CLICK · DRAG TO MOVE</div>
+        <div class="click-row">
+          <button class="click-btn" onclick="sendClick('left')">LEFT CLICK</button>
+          <button class="click-btn" onclick="sendClick('right')">RIGHT CLICK</button>
+          <button class="click-btn" onclick="sendKey('enter')">↵ ENTER</button>
+        </div>
+        <div class="hint">Tap = left click · Drag = move · Two finger tap = right click</div>
+
+        <div class="slider-row">
+          <span class="slider-label">SENSITIVITY</span>
+          <input type="range" id="sensitivitySlider" min="1" max="10" step="0.5" value="4">
+          <span class="slider-val" id="sensitivityVal">4</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">SCALE</span>
+          <input type="range" id="scaleSlider" min="0.5" max="2" step="0.05" value="1">
+          <span class="slider-val" id="scaleVal">1.00</span>
+        </div>
+      </div>
+
+      <!-- quick actions always visible -->
+      <div style="margin-top:20px; font-size:0.65rem; letter-spacing:2px; color:var(--accent); margin-bottom:10px;">// QUICK ACTIONS</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <button class="click-btn" onclick="sendHotkey(['ctrl','v'])">⎘ PASTE</button>
+        <button class="click-btn" onclick="sendMediaKey('audio_play')">⏯ PLAY / PAUSE</button>
+        <button class="click-btn" onclick="sendMediaKey('audio_prev')">⏮ PREVIOUS</button>
+        <button class="click-btn" onclick="sendMediaKey('audio_next')">⏭ NEXT</button>
+      </div>
+
+      <div style="margin-top:20px; font-size:0.65rem; letter-spacing:2px; color:var(--accent); margin-bottom:10px;">// AUDIO</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <button class="click-btn" onclick="sendMediaKey('audio_vol_up')">VOLUME +</button>
+        <button class="click-btn" onclick="sendMediaKey('audio_vol_down')">VOLUME -</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FILE BROWSER -->
+  <div class="card">
+    <div class="card-label">// file browser</div>
+    <p style="font-size:0.82rem; color:var(--muted); margin-bottom:14px;">Browse, download, and upload files on the server.</p>
+    <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+      <button class="btn-secondary" id="backBtn" onclick="goBack()" style="display:none;">← BACK</button>
+      <button class="btn-primary" onclick="browseFiles('.')" style="flex:1;">BROWSE FILES</button>
+    </div>
+    <div style="margin-bottom: 14px;">
+      <label for="fileUpload" style="display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 8px;">Upload file (max 500 MB):</label>
+      <input type="file" id="fileUpload" class="file-input">
+      <button class="btn-upload" onclick="uploadFile()">UPLOAD FILE</button>
+    </div>
+    <div id="fileList" class="content-box empty" style="margin-top:14px; list-style: none;">— no files listed yet —</div>
+  </div>
+
 
 <div id="toast"></div>
-
 <footer>CROSSBOARD · LOCAL CLIPBOARD BRIDGE</footer>
 
 <script>
-  const BASE = window.location.origin;
+  const BASE   = window.location.origin;
+  const WS_URL = BASE.replace(/^http/, 'ws') + '/ws';
 
-  // ── Health check on load ──────────────────────────────────────────
+  let ws = null, wsReady = false;
+  let currentMode = 'keyboard';
+  let lastX = 0.5, lastY = 0.5, lastSendTime = 0;
+  let SENSITIVITY = 4.0;
+  let SCALE = 1.0;
+
+  // ── Health ────────────────────────────────────────────────────────
   async function checkHealth() {
     try {
       const res = await fetch(`${BASE}/health`);
-      const ok = res.ok;
       const pill = document.getElementById('statusPill');
-      const txt  = document.getElementById('statusText');
-      pill.className = 'status-pill ' + (ok ? 'ok' : 'fail');
-      txt.textContent = ok ? 'server online' : 'server error';
+      pill.className = 'status-pill ' + (res.ok ? 'ok' : 'fail');
+      document.getElementById('statusText').textContent = res.ok ? 'server online' : 'server error';
     } catch {
-      const pill = document.getElementById('statusPill');
-      pill.className = 'status-pill fail';
+      document.getElementById('statusPill').className = 'status-pill fail';
       document.getElementById('statusText').textContent = 'unreachable';
     }
   }
 
-  // ── Fetch clipboard from server ───────────────────────────────────
+  // ── Clipboard GET ─────────────────────────────────────────────────
+  const TRUNCATE_LEN = 300;
+  let fullClipboardContent = '';
+
   async function fetchClipboard() {
     try {
-      const res = await fetch(`${BASE}/clipboard`);
+      const res  = await fetch(`${BASE}/clipboard`);
       const text = await res.text();
-      const box = document.getElementById('fetchedContent');
+      const box  = document.getElementById('fetchedContent');
+      fullClipboardContent = text;
       if (!text || text.trim() === '') {
         box.textContent = '— clipboard is empty —';
         box.className = 'content-box empty';
         document.getElementById('fetchedActions').style.display = 'none';
+        document.getElementById('fetchedExpand').style.display = 'none';
       } else {
-        box.textContent = text;
+        if (text.length > TRUNCATE_LEN) {
+          box.textContent = text.slice(0, TRUNCATE_LEN) + '…';
+          document.getElementById('fetchedExpand').style.display = 'block';
+        } else {
+          box.textContent = text;
+          document.getElementById('fetchedExpand').style.display = 'none';
+        }
         box.className = 'content-box';
         document.getElementById('fetchedActions').style.display = 'flex';
       }
       toast('Clipboard fetched', 'info');
-    } catch (e) {
-      toast('Failed to fetch clipboard', 'error');
-    }
+    } catch { toast('Failed to fetch clipboard', 'error'); }
   }
 
-  // ── Copy fetched content to local clipboard ───────────────────────
+  function expandContent() {
+    document.getElementById('fetchedContent').textContent = fullClipboardContent;
+    document.getElementById('fetchedExpand').style.display = 'none';
+  }
+
   async function copyFetchedToLocal() {
-    const text = document.getElementById('fetchedContent').textContent;
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(fullClipboardContent);
       toast('Copied to your clipboard!', 'success');
-    } catch {
-      toast('Clipboard permission denied', 'error');
-    }
+    } catch { toast('Clipboard permission denied', 'error'); }
   }
 
-  // ── Load fetched content into send box ────────────────────────────
   function loadIntoSend() {
-    const text = document.getElementById('fetchedContent').textContent;
-    document.getElementById('sendContent').value = text;
+    document.getElementById('sendContent').value = fullClipboardContent;
     document.getElementById('sendContent').focus();
     toast('Loaded into editor', 'info');
   }
 
-  // ── Send content to server clipboard ─────────────────────────────
+  // ── Clipboard SEND ────────────────────────────────────────────────
   async function sendClipboard() {
     const content = document.getElementById('sendContent').value.trim();
     if (!content) { toast('Nothing to send', 'error'); return; }
     try {
       const res = await fetch(`${BASE}/clipboard/send?content=${encodeURIComponent(content)}`);
-      if (res.ok) {
-        toast('Sent to server clipboard!', 'success');
-      } else {
-        toast('Send failed', 'error');
-      }
-    } catch {
-      toast('Connection error', 'error');
-    }
+      toast(res.ok ? 'Sent to server clipboard!' : 'Send failed', res.ok ? 'success' : 'error');
+    } catch { toast('Connection error', 'error'); }
   }
 
-  // ── Paste from local clipboard into textarea ──────────────────────
   async function pasteFromLocal() {
     try {
-      const text = await navigator.clipboard.readText();
-      document.getElementById('sendContent').value = text;
+      document.getElementById('sendContent').value = await navigator.clipboard.readText();
       toast('Pasted from your clipboard', 'info');
-    } catch {
-      toast('Clipboard permission denied — use Ctrl+V', 'error');
-    }
+    } catch { toast('Clipboard permission denied — use Ctrl+V', 'error'); }
   }
 
   function clearSend() {
@@ -442,7 +769,183 @@
     document.getElementById('sendContent').focus();
   }
 
-  // ── Toast notification ────────────────────────────────────────────
+  // ── Remote Control toggle ─────────────────────────────────────────
+  function toggleRemoteControl() {
+    const btn     = document.getElementById('rcToggleBtn');
+    const section = document.getElementById('remoteSection');
+    const isOpen  = section.classList.contains('visible');
+    if (isOpen) {
+      closeWS();
+      section.classList.remove('visible');
+      btn.textContent = 'ENTER REMOTE CONTROL';
+      btn.classList.remove('active');
+    } else {
+      section.classList.add('visible');
+      btn.textContent = 'EXIT REMOTE CONTROL';
+      btn.classList.add('active');
+      openWS();
+      setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  }
+
+  // ── WebSocket ─────────────────────────────────────────────────────
+  function openWS() {
+    ws = new WebSocket(WS_URL);
+    ws.onopen = () => {
+      wsReady = true;
+      setWsPill(true);
+      toast('Remote control connected', 'success');
+      document.getElementById('keyInput').focus();
+    };
+    ws.onclose = () => { wsReady = false; setWsPill(false); };
+    ws.onerror = () => { wsReady = false; setWsPill(false); toast('WS connection failed', 'error'); };
+  }
+
+  function closeWS() {
+    if (ws) { ws.close(); ws = null; }
+    wsReady = false;
+    setWsPill(false);
+  }
+
+  function setWsPill(connected) {
+    const pill = document.getElementById('wsPill');
+    pill.className = 'ws-pill ' + (connected ? 'connected' : 'disconnected');
+    document.getElementById('wsText').textContent = connected ? 'connected' : 'disconnected';
+  }
+
+  function wsSend(obj) {
+    if (ws && wsReady) ws.send(JSON.stringify(obj));
+    else toast('Not connected', 'error');
+  }
+
+  // ── Mode switch ───────────────────────────────────────────────────
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('modeKeyboard').className = 'mode-btn' + (mode === 'keyboard' ? ' active' : '');
+    document.getElementById('modeMouse').className    = 'mode-btn' + (mode === 'mouse'    ? ' active' : '');
+    document.getElementById('keyboardPanel').style.display = mode === 'keyboard' ? 'block' : 'none';
+    document.getElementById('mousePanel').style.display    = mode === 'mouse'    ? 'block' : 'none';
+    if (mode === 'keyboard') document.getElementById('keyInput').focus();
+  }
+
+  // ── Keyboard ─────────────────────────────────────────────────────
+  const keyInput = document.getElementById('keyInput');
+
+  keyInput.addEventListener('keydown', (e) => {
+    if (!wsReady) return;
+    const specials = {
+      'Enter': 'enter', 'Backspace': 'backspace', 'Tab': 'tab',
+      'Escape': 'escape', 'ArrowUp': 'up', 'ArrowDown': 'down',
+      'ArrowLeft': 'left', 'ArrowRight': 'right', 'Delete': 'delete'
+    };
+    if (specials[e.key]) {
+      e.preventDefault();
+      wsSend({ type: 'key', value: specials[e.key] });
+    }
+  });
+
+  keyInput.addEventListener('input', (e) => {
+    if (!wsReady) return;
+    if (e.data) wsSend({ type: 'type', value: e.data });
+    keyInput.value = '';
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (currentMode !== 'keyboard' || !wsReady) return;
+    if (document.activeElement === keyInput) return;
+    const specials = {
+      'Enter': 'enter', 'Backspace': 'backspace', 'Tab': 'tab',
+      'Escape': 'escape', 'ArrowUp': 'up', 'ArrowDown': 'down',
+      'ArrowLeft': 'left', 'ArrowRight': 'right', 'Delete': 'delete'
+    };
+    if (specials[e.key]) {
+      e.preventDefault();
+      wsSend({ type: 'key', value: specials[e.key] });
+    } else if (e.key.length === 1) {
+      wsSend({ type: 'type', value: e.key });
+    }
+  });
+
+  function sendKey(key) {
+    wsSend({ type: 'key', value: key });
+  }
+
+  // ── Hotkeys & media ───────────────────────────────────────────────
+  function sendHotkey(keys) {
+    wsSend({ type: 'hotkey', keys: keys });
+  }
+
+  function sendMediaKey(key) {
+    wsSend({ type: 'key', value: key });
+  }
+
+  // ── Trackpad ──────────────────────────────────────────────────────
+  function sendClick(btn) {
+    wsSend({ type: 'mouse', x: lastX, y: lastY, click: true, button: btn, scale: SCALE });
+  }
+
+  const trackpad = document.getElementById('trackpad');
+  let touchStartTime = 0;
+  let touchMoved = false;
+  let prevTouchX = 0, prevTouchY = 0;
+
+  trackpad.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    touchStartTime = Date.now();
+    touchMoved = false;
+    const touch = e.touches[0];
+    const rect = trackpad.getBoundingClientRect();
+    prevTouchX = touch.clientX - rect.left;
+    prevTouchY = touch.clientY - rect.top;
+  }, { passive: false });
+
+  trackpad.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const now = Date.now();
+    if (now - lastSendTime < 16) return;
+    lastSendTime = now;
+    touchMoved = true;
+    const touch = e.touches[0];
+    const rect  = trackpad.getBoundingClientRect();
+    const curX  = touch.clientX - rect.left;
+    const curY  = touch.clientY - rect.top;
+
+    const dx = ((curX - prevTouchX) / rect.width)  * SENSITIVITY * SCALE;
+    const dy = ((curY - prevTouchY) / rect.height) * SENSITIVITY * SCALE;
+
+    lastX = lastX + dx;
+    lastY = lastY + dy;
+
+    prevTouchX = curX;
+    prevTouchY = curY;
+
+    const sx = Math.max(0, Math.min(1, lastX));
+    const sy = Math.max(0, Math.min(1, lastY));
+
+    trackpad.classList.add('active-touch');
+    wsSend({ type: 'mouse', x: sx, y: sy, click: false, button: 'left', scale: SCALE });
+  }, { passive: false });
+
+  trackpad.addEventListener('touchend', (e) => {
+    trackpad.classList.remove('active-touch');
+    const elapsed = Date.now() - touchStartTime;
+    if (!touchMoved && elapsed < 250) {
+      sendClick(e.changedTouches.length >= 2 ? 'right' : 'left');
+    }
+  });
+
+  // ── Sliders ───────────────────────────────────────────────────────
+  document.getElementById('sensitivitySlider').addEventListener('input', (e) => {
+    SENSITIVITY = parseFloat(e.target.value);
+    document.getElementById('sensitivityVal').textContent = e.target.value;
+  });
+
+  document.getElementById('scaleSlider').addEventListener('input', (e) => {
+    SCALE = parseFloat(e.target.value);
+    document.getElementById('scaleVal').textContent = parseFloat(e.target.value).toFixed(2);
+  });
+
+  // ── Toast ─────────────────────────────────────────────────────────
   let toastTimer;
   function toast(msg, type = 'info') {
     const el = document.getElementById('toast');
@@ -452,7 +955,97 @@
     toastTimer = setTimeout(() => { el.className = ''; }, 2800);
   }
 
-  // ── Init ──────────────────────────────────────────────────────────
+  // ── File Browser ───────────────────────────────────────────────────
+  let folderHistory = ['.'];
+  let currentFolder = '.';
+
+  function browseFiles(folder) {
+    if (!folder || folder === ".") {
+      folder = ".";
+    }
+
+    currentFolder = folder;
+    if (folderHistory.length === 0 || folderHistory[folderHistory.length - 1] !== folder) {
+      folderHistory.push(folder);
+    }
+    updateBackButton();
+    
+    fetch(`${BASE}/listfiles?folder=${encodeURIComponent(folder)}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to list files');
+        return res.text();
+      })
+      .then(html => {
+        document.getElementById('fileList').innerHTML = html;
+        document.getElementById('fileList').className = 'content-box';
+        toast('Files listed', 'info');
+      })
+      .catch(err => {
+        document.getElementById('fileList').innerHTML = 'Error: ' + err.message;
+        document.getElementById('fileList').className = 'content-box empty';
+        toast('Failed to list files', 'error');
+      });
+  }
+
+  function goBack() {
+    if (folderHistory.length > 1) {
+      folderHistory.pop();
+      currentFolder = folderHistory[folderHistory.length - 1];
+      updateBackButton();
+      
+      fetch(`${BASE}/listfiles?folder=${encodeURIComponent(currentFolder)}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to list files');
+          return res.text();
+        })
+        .then(html => {
+          document.getElementById('fileList').innerHTML = html;
+          document.getElementById('fileList').className = 'content-box';
+          toast('Navigated back', 'info');
+        })
+        .catch(err => {
+          document.getElementById('fileList').innerHTML = 'Error: ' + err.message;
+          document.getElementById('fileList').className = 'content-box empty';
+          toast('Failed to go back', 'error');
+        });
+    }
+  }
+
+  function updateBackButton() {
+    const backBtn = document.getElementById('backBtn');
+    backBtn.style.display = folderHistory.length > 1 ? 'block' : 'none';
+  }
+
+  function uploadFile() {
+    const fileInput = document.getElementById('fileUpload');
+    if (!fileInput.files.length) {
+      toast('No file selected', 'error');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('folder', currentFolder);
+    
+    fetch(`${BASE}/uploadfile`, {
+      method: 'POST',
+      body: formData
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          toast('File uploaded successfully', 'success');
+          fileInput.value = '';
+          browseFiles(currentFolder);
+        } else {
+          toast('Upload failed: ' + data.message, 'error');
+        }
+      })
+      .catch(err => {
+        toast('Upload error: ' + err.message, 'error');
+      });
+  }
+
   checkHealth();
   setInterval(checkHealth, 15000);
 </script>

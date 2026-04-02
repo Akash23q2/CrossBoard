@@ -8,5 +8,5 @@ import (
 )
 
 func generateQr(content string) {
-	qrterminal.Generate(content, qrterminal.M, os.Stdout)
+	qrterminal.GenerateHalfBlock(content, qrterminal.L, os.Stdout)
 }

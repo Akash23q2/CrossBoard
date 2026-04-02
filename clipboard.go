@@ -3,8 +3,6 @@
 package main
 
 import (
-	"fmt"
-
 	"golang.design/x/clipboard"
 )
 
@@ -14,7 +12,7 @@ func readClipboard() string {
 		panic(err)
 	}
 	content := string(clipboard.Read(clipboard.FmtText))
-	fmt.Println("read content", content)
+	// fmt.Println("read content", content)
 	return content
 }
 
@@ -24,5 +22,5 @@ func writeClipboard(content string) {
 		panic(err)
 	}
 	clipboard.Write(clipboard.FmtText, []byte(content))
-	fmt.Println("wrote content", content)
+	// fmt.Println("wrote content", content)
 }
