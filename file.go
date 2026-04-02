@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,8 +27,33 @@ func sanitizePath(reqPath string) (string, error) {
 }
 
 func getFile(w http.ResponseWriter, r *http.Request) {
-	fs := http.FileServer(http.Dir(appHome))
-	http.StripPrefix("/getfile/", fs).ServeHTTP(w, r)
+	filePath := r.URL.Path
+	filePath = strings.TrimPrefix(filePath, "/getfile/")
+	// URL decode the path
+	decodedPath, err := url.QueryUnescape(filePath)
+	if err != nil {
+		http.Error(w, "Invalid path", 400)
+		return
+	}
+	// Convert forward slashes to OS-specific separator
+	decodedPath = filepath.FromSlash(decodedPath)
+	fullPath, err := sanitizePath(decodedPath)
+	if err != nil {
+		http.Error(w, "Access denied", 403)
+		return
+	}
+	// Check if file exists
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		http.Error(w, "File not found", 404)
+		return
+	}
+	_ = info // use info to avoid unused variable warning
+
+	// Set headers to force download
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(fullPath)+"\"")
+	w.Header().Set("Content-Type", "application/octet-stream")
+	http.ServeFile(w, r, fullPath)
 }
 
 func listFiles(w http.ResponseWriter, r *http.Request) {
@@ -105,5 +131,5 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	// fmt.Fprintf(w, `{"success": true, "message": "File uploaded: %s"}`+"\n", handler.Filename)
+	fmt.Fprintf(w, `{"success": true, "message": "File uploaded: %s"}`, handler.Filename)
 }

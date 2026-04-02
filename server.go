@@ -34,8 +34,11 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func root(w http.ResponseWriter, r *http.Request) {
-	// io.WriteString(w, "Welcome To CrossBoard!")
-	// http.ServeFile(w, r, indexHtml)
+	// Only serve index.html for root path
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
 	io.WriteString(w, indexHtml)
 }
 

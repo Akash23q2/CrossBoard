@@ -21,16 +21,15 @@ func main() {
 	// fmt.Println("App home directory:", appHome)
 
 	//register routes
-
-	http.HandleFunc("/", root)
 	http.HandleFunc("/health", getHealth)
 	http.HandleFunc("/platform", getPlatform)
 	http.HandleFunc("/clipboard", getClipboard)
 	http.HandleFunc("/clipboard/send", sendClipboard)
 	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/getfile", getFile)
+	http.HandleFunc("/getfile/", getFile)
 	http.HandleFunc("/listfiles", listFiles)
 	http.HandleFunc("/uploadfile", uploadFile)
+	http.HandleFunc("/", root) // Register "/" LAST so specific routes take priority
 
 	//start the server
 	fmt.Println("starting crossboard server!")
