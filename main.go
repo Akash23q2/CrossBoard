@@ -33,9 +33,18 @@ func main() {
 
 	//start the server
 	fmt.Println("starting crossboard server!")
-	url := handleTunneling()
-	generateQr(url)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	tunnelURL, lanURL := handleTunneling()
+	if tunnelURL != "" {
+		fmt.Println("Tunnel URL:", tunnelURL)
+		generateQr(tunnelURL)
+	}
+	if lanURL != "" {
+		fmt.Println("Local network URL:", lanURL)
+		generateQr(lanURL)
+	}
+
+	// bind to all interfaces so LAN devices can connect
+	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil)
 	if err != nil {
 		fmt.Println(err)
 	}

@@ -101,7 +101,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	err := r.ParseMultipartForm(500 << 20) // 500 MB
+	err := r.ParseMultipartForm(5 << 30) // 5 GB
 	if err != nil {
 		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
