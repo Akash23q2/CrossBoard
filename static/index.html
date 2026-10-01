@@ -315,7 +315,66 @@
     font-weight: 600;
   }
 
+  .control-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .gesture-config {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .gesture-config h3 {
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    margin: 16px 0 10px;
+  }
+
+  .gesture-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .gesture-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 0.65rem;
+  }
+
+  .gesture-field input {
+    width: 100%;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font: 0.76rem 'IBM Plex Mono', monospace;
+    padding: 9px;
+    outline: none;
+  }
+
+  .gesture-field input:focus { border-color: var(--accent); }
+  .gesture-field input::placeholder { color: var(--muted); }
+
+  .gesture-hint {
+    color: var(--muted);
+    font-size: 0.66rem;
+    line-height: 1.6;
+    margin-top: 9px;
+  }
+
   #trackpad {
+    position: relative;
     width: 100%;
     height: 340px;
     background: var(--bg);
@@ -329,12 +388,84 @@
     letter-spacing: 2px;
     cursor: crosshair;
     touch-action: none;
+    overscroll-behavior: none;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     transition: border-color 0.2s;
     margin-bottom: 12px;
   }
 
   #trackpad.active-touch { border-color: var(--accent); }
+
+  .trackpad-feedback {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    display: grid;
+    gap: 7px;
+    min-width: 180px;
+    max-width: min(88%, 420px);
+    padding: 18px 24px;
+    border: 1px solid var(--accent);
+    background: rgba(17, 17, 24, 0.94);
+    color: var(--text);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+
+  .trackpad-feedback.visible {
+    animation: gestureFeedback 1.15s ease both;
+  }
+
+  .trackpad-feedback-title {
+    color: var(--accent);
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .trackpad-feedback-detail {
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  @keyframes gestureFeedback {
+    0% { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
+    12%, 78% { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, calc(-50% - 4px)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .trackpad-feedback.visible { animation-duration: 1ms; }
+  }
+
+  body.immersive-trackpad {
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  body.immersive-trackpad .container > * { visibility: hidden; }
+  body.immersive-trackpad .card { animation: none; transform: none; overflow: visible; }
+
+  body.immersive-trackpad #trackpad {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--bg);
+    visibility: visible;
+    font-size: 0.68rem;
+  }
 
   .click-row {
     display: grid;
@@ -536,6 +667,7 @@
     textarea { font-size: 0.85rem; min-height: 110px; }
     #toast { left: 16px; right: 16px; bottom: 16px; max-width: unset; }
     #trackpad { height: 260px; }
+    .control-toolbar { align-items: flex-start; }
   }
 </style>
 </head>
@@ -590,9 +722,12 @@
     <div class="card">
       <div class="card-label">// control panel</div>
 
-      <div class="ws-pill disconnected" id="wsPill">
-        <div class="dot"></div>
-        <span id="wsText">disconnected</span>
+      <div class="control-toolbar">
+        <div class="ws-pill disconnected" id="wsPill">
+          <div class="dot"></div>
+          <span id="wsText">disconnected</span>
+        </div>
+        <button class="btn-secondary" id="fullscreenBtn" onclick="toggleFullscreen()" title="Enter fullscreen">FULLSCREEN</button>
       </div>
 
       <div class="mode-row">
@@ -618,13 +753,24 @@
 
       <!-- trackpad panel -->
       <div id="mousePanel" style="display:none;">
-        <div id="trackpad">TAP TO CLICK · DRAG TO MOVE</div>
+        <button class="btn-secondary" id="immersiveTrackpadBtn" onclick="toggleImmersiveTrackpad()" style="width:100%; margin-bottom:10px;">FULLSCREEN TRACKPAD</button>
+        <div id="trackpad" aria-label="Remote trackpad">
+          TAP TO CLICK · DRAG TO MOVE
+          <div class="trackpad-feedback" id="trackpadFeedback" aria-live="polite" aria-atomic="true">
+            <span class="trackpad-feedback-title" id="trackpadFeedbackTitle"></span>
+            <span class="trackpad-feedback-detail" id="trackpadFeedbackDetail"></span>
+          </div>
+        </div>
         <div class="click-row">
           <button class="click-btn" onclick="sendClick('left')">LEFT CLICK</button>
           <button class="click-btn" onclick="sendClick('right')">RIGHT CLICK</button>
           <button class="click-btn" onclick="sendKey('enter')">↵ ENTER</button>
         </div>
-        <div class="hint">Tap = left click · Drag = move · Two finger tap = right click</div>
+        <div class="hint">One finger = move / left click · Two-finger tap = right click · Two-finger swipe = scroll · Three or four fingers = shortcuts</div>
+        <label class="hint" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="reverseScrollToggle">
+          Reverse scroll direction
+        </label>
 
         <div class="slider-row">
           <span class="slider-label">SENSITIVITY</span>
@@ -635,6 +781,25 @@
           <span class="slider-label">SCALE</span>
           <input type="range" id="scaleSlider" min="0.5" max="2" step="0.05" value="1">
           <span class="slider-val" id="scaleVal">1.00</span>
+        </div>
+
+        <div class="gesture-config">
+          <div class="card-label">// swipe shortcuts</div>
+          <div class="gesture-hint">Blank fields use the shown defaults. Enter a key or combo separated by +, such as <code>win+n</code> or <code>win+a</code>, or type <code>off</code> to disable. Windows key aliases: <code>win</code>, <code>windows</code>. Settings stay on this device.</div>
+          <h3>3 FINGER</h3>
+          <div class="gesture-grid">
+            <label class="gesture-field">LEFT<input data-gesture="3-left" type="text" placeholder="alt+shift+tab" autocomplete="off"></label>
+            <label class="gesture-field">RIGHT<input data-gesture="3-right" type="text" placeholder="alt+tab" autocomplete="off"></label>
+            <label class="gesture-field">UP<input data-gesture="3-up" type="text" placeholder="ctrl+up" autocomplete="off"></label>
+            <label class="gesture-field">DOWN<input data-gesture="3-down" type="text" placeholder="ctrl+down" autocomplete="off"></label>
+          </div>
+          <h3>4 FINGER</h3>
+          <div class="gesture-grid">
+            <label class="gesture-field">LEFT<input data-gesture="4-left" type="text" placeholder="alt+left" autocomplete="off"></label>
+            <label class="gesture-field">RIGHT<input data-gesture="4-right" type="text" placeholder="alt+right" autocomplete="off"></label>
+            <label class="gesture-field">UP<input data-gesture="4-up" type="text" placeholder="ctrl+alt+up" autocomplete="off"></label>
+            <label class="gesture-field">DOWN<input data-gesture="4-down" type="text" placeholder="ctrl+alt+down" autocomplete="off"></label>
+          </div>
         </div>
       </div>
 
@@ -685,6 +850,7 @@
   let lastX = 0.5, lastY = 0.5, lastSendTime = 0;
   let SENSITIVITY = 4.0;
   let SCALE = 1.0;
+  let immersiveTrackpad = false;
 
   // ── Health ────────────────────────────────────────────────────────
   async function checkHealth() {
@@ -788,6 +954,58 @@
     }
   }
 
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      toast('Fullscreen is unavailable in this browser', 'error');
+    }
+  }
+
+  function updateFullscreenButton() {
+    const isFullscreen = Boolean(document.fullscreenElement);
+    const button = document.getElementById('fullscreenBtn');
+    button.textContent = isFullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+    button.title = isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
+    if (!isFullscreen && immersiveTrackpad) {
+      immersiveTrackpad = false;
+      document.body.classList.remove('immersive-trackpad');
+      screen.orientation?.unlock?.();
+    }
+    document.getElementById('immersiveTrackpadBtn').textContent = immersiveTrackpad ? 'EXIT FULLSCREEN TRACKPAD' : 'FULLSCREEN TRACKPAD';
+  }
+
+  document.addEventListener('fullscreenchange', updateFullscreenButton);
+
+  async function toggleImmersiveTrackpad() {
+    if (immersiveTrackpad) {
+      immersiveTrackpad = false;
+      document.body.classList.remove('immersive-trackpad');
+      screen.orientation?.unlock?.();
+      if (document.fullscreenElement) await document.exitFullscreen();
+      updateFullscreenButton();
+      return;
+    }
+
+    try {
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      immersiveTrackpad = true;
+      document.body.classList.add('immersive-trackpad');
+      try {
+        await screen.orientation?.lock?.('landscape');
+      } catch {
+        toast('Rotate your phone to landscape for the widest trackpad', 'info');
+      }
+      updateFullscreenButton();
+    } catch {
+      toast('Fullscreen trackpad is unavailable in this browser', 'error');
+    }
+  }
+
   // ── WebSocket ─────────────────────────────────────────────────────
   function openWS() {
     ws = new WebSocket(WS_URL);
@@ -795,7 +1013,7 @@
       wsReady = true;
       setWsPill(true);
       toast('Remote control connected', 'success');
-      document.getElementById('keyInput').focus();
+      if (currentMode === 'keyboard') document.getElementById('keyInput').focus();
     };
     ws.onclose = () => { wsReady = false; setWsPill(false); };
     ws.onerror = () => { wsReady = false; setWsPill(false); toast('WS connection failed', 'error'); };
@@ -826,6 +1044,7 @@
     document.getElementById('keyboardPanel').style.display = mode === 'keyboard' ? 'block' : 'none';
     document.getElementById('mousePanel').style.display    = mode === 'mouse'    ? 'block' : 'none';
     if (mode === 'keyboard') document.getElementById('keyInput').focus();
+    else document.getElementById('keyInput').blur();
   }
 
   // ── Keyboard ─────────────────────────────────────────────────────
@@ -885,54 +1104,248 @@
   }
 
   const trackpad = document.getElementById('trackpad');
-  let touchStartTime = 0;
-  let touchMoved = false;
-  let prevTouchX = 0, prevTouchY = 0;
-
-  trackpad.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    touchStartTime = Date.now();
-    touchMoved = false;
-    const touch = e.touches[0];
-    const rect = trackpad.getBoundingClientRect();
-    prevTouchX = touch.clientX - rect.left;
-    prevTouchY = touch.clientY - rect.top;
-  }, { passive: false });
-
-  trackpad.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const now = Date.now();
-    if (now - lastSendTime < 16) return;
-    lastSendTime = now;
-    touchMoved = true;
-    const touch = e.touches[0];
-    const rect  = trackpad.getBoundingClientRect();
-    const curX  = touch.clientX - rect.left;
-    const curY  = touch.clientY - rect.top;
-
-    const dx = ((curX - prevTouchX) / rect.width)  * SENSITIVITY * SCALE;
-    const dy = ((curY - prevTouchY) / rect.height) * SENSITIVITY * SCALE;
-
-    lastX = lastX + dx;
-    lastY = lastY + dy;
-
-    prevTouchX = curX;
-    prevTouchY = curY;
-
-    const sx = Math.max(0, Math.min(1, lastX));
-    const sy = Math.max(0, Math.min(1, lastY));
-
-    trackpad.classList.add('active-touch');
-    wsSend({ type: 'mouse', x: sx, y: sy, click: false, button: 'left', scale: SCALE });
-  }, { passive: false });
-
-  trackpad.addEventListener('touchend', (e) => {
-    trackpad.classList.remove('active-touch');
-    const elapsed = Date.now() - touchStartTime;
-    if (!touchMoved && elapsed < 250) {
-      sendClick(e.changedTouches.length >= 2 ? 'right' : 'left');
-    }
+  const trackpadFeedback = document.getElementById('trackpadFeedback');
+  let trackpadFeedbackTimer;
+  const gestureInputs = [...document.querySelectorAll('[data-gesture]')];
+  const gestureStorageKey = 'crossboard-gesture-shortcuts';
+  const scrollStorageKey = 'crossboard-reverse-scroll';
+  const defaultGestures = {
+    '3-left': 'alt+shift+tab', '3-right': 'alt+tab', '3-up': 'ctrl+up', '3-down': 'ctrl+down',
+    '4-left': 'alt+left', '4-right': 'alt+right', '4-up': 'ctrl+alt+up', '4-down': 'ctrl+alt+down'
+  };
+  let gesture = null;
+  let scrollRemainderX = 0;
+  let scrollRemainderY = 0;
+  const activePointers = new Map();
+  const activeTouches = new Map();
+  const reverseScrollToggle = document.getElementById('reverseScrollToggle');
+  reverseScrollToggle.checked = localStorage.getItem(scrollStorageKey) === 'true';
+  reverseScrollToggle.addEventListener('change', () => {
+    localStorage.setItem(scrollStorageKey, String(reverseScrollToggle.checked));
   });
+
+  try {
+    const savedGestures = JSON.parse(localStorage.getItem(gestureStorageKey) || '{}');
+    gestureInputs.forEach((input) => { input.value = savedGestures[input.dataset.gesture]?.trim() ? savedGestures[input.dataset.gesture] : defaultGestures[input.dataset.gesture]; });
+  } catch {
+    gestureInputs.forEach((input) => { input.value = defaultGestures[input.dataset.gesture]; });
+  }
+
+  gestureInputs.forEach((input) => input.addEventListener('input', () => {
+    const savedGestures = Object.fromEntries(gestureInputs.map((field) => [field.dataset.gesture, field.value]));
+    localStorage.setItem(gestureStorageKey, JSON.stringify(savedGestures));
+  }));
+
+  function touchCentroid(touches) {
+    let x = 0;
+    let y = 0;
+    for (const touch of touches) {
+      x += touch.clientX;
+      y += touch.clientY;
+    }
+    return { x: x / touches.length, y: y / touches.length };
+  }
+
+  function pointMapFromTouches(touches) {
+    return new Map(Array.from(touches, (touch) => [touch.identifier, { x: touch.clientX, y: touch.clientY }]));
+  }
+
+  function centroidFromPoints(points) {
+    return touchCentroid(Array.from(points.values(), (point) => ({ clientX: point.x, clientY: point.y })));
+  }
+
+  function beginGesture(points) {
+    if (points.size === 0) return;
+    const point = centroidFromPoints(points);
+    if (!gesture) {
+      gesture = { count: points.size, starts: new Map(points), startX: point.x, startY: point.y, lastX: point.x, lastY: point.y, moved: false, startedAt: Date.now() };
+    } else if (points.size > gesture.count) {
+      gesture.count = points.size;
+      gesture.starts = new Map(points);
+      gesture.startX = point.x;
+      gesture.startY = point.y;
+      gesture.lastX = point.x;
+      gesture.lastY = point.y;
+      gesture.moved = false;
+      gesture.shortcutFired = false;
+      gesture.feedbackShown = false;
+      gesture.startedAt = Date.now();
+    }
+    if (gesture.count === 2) {
+      scrollRemainderX = 0;
+      scrollRemainderY = 0;
+    }
+    if (gesture.count === 3 || gesture.count === 4) {
+      showTrackpadFeedback(`${gesture.count}-FINGER INPUT`, 'SWIPE TO TRIGGER SHORTCUT');
+    }
+  }
+
+  function median(values) {
+    const sorted = values.sort((a, b) => a - b);
+    return sorted[Math.floor(sorted.length / 2)] || 0;
+  }
+
+  function gestureDisplacement(points, sourceGesture = gesture) {
+    const dx = [];
+    const dy = [];
+    for (const [id, point] of points) {
+      const start = sourceGesture.starts.get(id);
+      if (!start) continue;
+      const moveX = point.x - start.x;
+      const moveY = point.y - start.y;
+      if (Math.hypot(moveX, moveY) >= 12) {
+        dx.push(moveX);
+        dy.push(moveY);
+      }
+    }
+    return { x: median(dx), y: median(dy), movingFingers: dx.length };
+  }
+
+  function showTrackpadFeedback(title, detail = '') {
+    document.getElementById('trackpadFeedbackTitle').textContent = title;
+    document.getElementById('trackpadFeedbackDetail').textContent = detail;
+    trackpadFeedback.classList.remove('visible');
+    void trackpadFeedback.offsetWidth;
+    trackpadFeedback.classList.add('visible');
+    clearTimeout(trackpadFeedbackTimer);
+    trackpadFeedbackTimer = setTimeout(() => trackpadFeedback.classList.remove('visible'), 1150);
+  }
+
+  function runSwipeShortcut(fingerCount, deltaX, deltaY) {
+    if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 35) return false;
+    const direction = Math.abs(deltaX) > Math.abs(deltaY)
+      ? (deltaX < 0 ? 'left' : 'right')
+      : (deltaY < 0 ? 'up' : 'down');
+    const input = gestureInputs.find((field) => field.dataset.gesture === `${fingerCount}-${direction}`);
+    const configuredShortcut = input?.value.trim() || defaultGestures[`${fingerCount}-${direction}`];
+    if (!configuredShortcut || configuredShortcut.toLowerCase() === 'off') return false;
+    const aliases = { arrowleft: 'left', arrowright: 'right', arrowup: 'up', arrowdown: 'down', esc: 'escape', control: 'ctrl', option: 'alt', win: 'cmd', windows: 'cmd', windowskey: 'cmd', super: 'cmd', meta: 'cmd' };
+    const keys = configuredShortcut.split('+').map((key) => {
+      const normalized = key.trim().toLowerCase().replace(/\s+/g, '');
+      return aliases[normalized] || normalized;
+    }).filter(Boolean);
+    if (keys.length) {
+      sendHotkey(keys);
+      showTrackpadFeedback(`${fingerCount}-FINGER SWIPE ${direction.toUpperCase()}`, keys.join(' + ').toUpperCase());
+      return true;
+    }
+    return false;
+  }
+
+  function sendScroll(deltaX, deltaY) {
+    scrollRemainderX += deltaX;
+    scrollRemainderY += deltaY;
+    const amountX = Math.trunc(scrollRemainderX / 8);
+    const amountY = Math.trunc(scrollRemainderY / 8);
+    if (amountX !== 0 || amountY !== 0) {
+      scrollRemainderX -= amountX * 8;
+      scrollRemainderY -= amountY * 8;
+      wsSend({ type: 'scroll', deltaX: amountX, deltaY: amountY });
+    }
+  }
+
+  function finishTouchGesture(cancelled = false) {
+    trackpad.classList.remove('active-touch');
+    if (!gesture) return;
+    const completedGesture = gesture;
+    gesture = null;
+    if (cancelled) return;
+    if (completedGesture.count === 1 && !completedGesture.moved && Date.now() - completedGesture.startedAt < 250) sendClick('left');
+    else if (completedGesture.count === 2 && !completedGesture.moved && Date.now() - completedGesture.startedAt < 350) {
+      sendClick('right');
+      showTrackpadFeedback('RIGHT CLICK', 'TWO-FINGER TAP');
+    }
+    else if ((completedGesture.count === 3 || completedGesture.count === 4) && !completedGesture.shortcutFired) {
+      const delta = gestureDisplacement(completedGesture.lastPoints || completedGesture.starts, completedGesture);
+      if (delta.movingFingers >= 2) runSwipeShortcut(completedGesture.count, delta.x, delta.y);
+    }
+  }
+
+  function moveGesture(points) {
+    if (!gesture || points.size === 0) return;
+    const point = centroidFromPoints(points);
+    const dx = point.x - gesture.lastX;
+    const dy = point.y - gesture.lastY;
+    gesture.lastX = point.x;
+    gesture.lastY = point.y;
+    gesture.lastPoints = new Map(points);
+    const displacement = gestureDisplacement(points);
+    if (displacement.movingFingers > 0) gesture.moved = true;
+    trackpad.classList.add('active-touch');
+    if ((gesture.count === 3 || gesture.count === 4) && displacement.movingFingers >= 2 && !gesture.shortcutFired) {
+      gesture.shortcutFired = runSwipeShortcut(gesture.count, displacement.x, displacement.y);
+    }
+    if (gesture.count === 1) {
+      const now = Date.now();
+      if (now - lastSendTime < 16) return;
+      lastSendTime = now;
+      const rect = trackpad.getBoundingClientRect();
+      lastX = Math.max(0, Math.min(1, lastX + (dx / rect.width) * SENSITIVITY * SCALE));
+      lastY = Math.max(0, Math.min(1, lastY + (dy / rect.height) * SENSITIVITY * SCALE));
+      wsSend({ type: 'mouse', x: lastX, y: lastY, click: false, button: 'left', scale: SCALE });
+    } else if (gesture.count === 2) {
+      const horizontal = Math.abs(dx) > 8;
+      const vertical = Math.abs(dy) > 8;
+      if ((horizontal || vertical) && !gesture.feedbackShown) {
+        const directions = [];
+        if (horizontal) directions.push(dx < 0 ? 'LEFT' : 'RIGHT');
+        if (vertical) directions.push(dy < 0 ? 'UP' : 'DOWN');
+        showTrackpadFeedback(`SCROLL ${directions.join(' · ')}`, 'TWO FINGERS');
+        gesture.feedbackShown = true;
+      }
+      sendScroll(reverseScrollToggle.checked ? dx : -dx, reverseScrollToggle.checked ? dy : -dy);
+    }
+  }
+
+  if ('PointerEvent' in window) {
+    trackpad.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      e.preventDefault();
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try { trackpad.setPointerCapture(e.pointerId); } catch {}
+      beginGesture(activePointers);
+    });
+
+    trackpad.addEventListener('pointermove', (e) => {
+      if (!activePointers.has(e.pointerId)) return;
+      e.preventDefault();
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      moveGesture(activePointers);
+    });
+
+    trackpad.addEventListener('pointerup', (e) => {
+      if (!activePointers.has(e.pointerId)) return;
+      activePointers.delete(e.pointerId);
+      if (activePointers.size === 0) finishTouchGesture();
+    });
+
+    trackpad.addEventListener('pointercancel', (e) => {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size === 0) finishTouchGesture(true);
+    });
+  } else {
+    trackpad.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      activeTouches.clear();
+      for (const [id, point] of pointMapFromTouches(e.touches)) activeTouches.set(id, point);
+      beginGesture(activeTouches);
+    }, { passive: false });
+
+    trackpad.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      activeTouches.clear();
+      for (const [id, point] of pointMapFromTouches(e.touches)) activeTouches.set(id, point);
+      moveGesture(activeTouches);
+    }, { passive: false });
+
+    trackpad.addEventListener('touchend', (e) => {
+      activeTouches.clear();
+      for (const [id, point] of pointMapFromTouches(e.touches)) activeTouches.set(id, point);
+      if (activeTouches.size === 0) finishTouchGesture();
+    });
+
+    trackpad.addEventListener('touchcancel', () => finishTouchGesture(true));
+  }
 
   // ── Sliders ───────────────────────────────────────────────────────
   document.getElementById('sensitivitySlider').addEventListener('input', (e) => {

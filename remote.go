@@ -14,6 +14,8 @@ type WSMessage struct {
 	Value  string   `json:"value"` // for key/type
 	X      float64  `json:"x"`     // for mouse, 0-1 normalized
 	Y      float64  `json:"y"`
+	DeltaX int      `json:"deltaX"`
+	DeltaY int      `json:"deltaY"`
 	Click  bool     `json:"click"` // true = left click
 	Button string   `json:"button"`
 	Keys   []string `json:"keys"` // for hotkey, e.g. ["ctrl","v"]
@@ -63,6 +65,10 @@ func remoteControlListener(conn *websocket.Conn) {
 				}
 				robotgo.Click(btn, false)
 			}
+
+		case "scroll":
+			robotgo.Scroll(0, wsMessage.DeltaY)
+			scrollHorizontal(wsMessage.DeltaX)
 
 		case "hotkey":
 			if len(wsMessage.Keys) > 0 {
