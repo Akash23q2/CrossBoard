@@ -10,7 +10,7 @@ import (
 	"regexp"
 )
 
-const port = 8080
+const port = 5050
 
 func extractTunnelURL(output string) string {
 	re := regexp.MustCompile(`https://[a-zA-Z0-9-]+\.trycloudflare\.com`)
