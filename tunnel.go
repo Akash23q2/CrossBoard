@@ -8,9 +8,12 @@ import (
 	"net"
 	"os/exec"
 	"regexp"
+	"time"
 )
 
 const port = 5050
+
+const tunnelStartupTimeout = 5 * time.Second
 
 func extractTunnelURL(output string) string {
 	re := regexp.MustCompile(`https://[a-zA-Z0-9-]+\.trycloudflare\.com`)
@@ -32,25 +35,48 @@ func handleTunneling() (string, string) {
 		return "", lan
 	}
 
-	cmd.Start()
-
-	scanner := bufio.NewScanner(stderr)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if match := extractTunnelURL(line); match != "" {
-			return match, lan
-		}
+	if err := cmd.Start(); err != nil {
+		fmt.Println(err)
+		return "", lan
 	}
 
-	return "", lan
+	tunnelURL := make(chan string, 1)
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		foundURL := false
+		for scanner.Scan() {
+			if match := extractTunnelURL(scanner.Text()); match != "" && !foundURL {
+				tunnelURL <- match
+				foundURL = true
+			}
+		}
+		if !foundURL {
+			tunnelURL <- ""
+		}
+		_ = cmd.Wait()
+	}()
+
+	timer := time.NewTimer(tunnelStartupTimeout)
+	defer timer.Stop()
+	select {
+	case url := <-tunnelURL:
+		if url == "" {
+			return "", lan
+		}
+		return url, lan
+	case <-timer.C:
+		_ = cmd.Process.Kill()
+		return "", lan
+	}
 }
 
-// getLocalIP returns the first non-loopback IPv4 address we can find.
+// getLocalIP prefers common USB tethering IPv4 ranges, then uses the first local IPv4 address.
 func getLocalIP() string {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return ""
 	}
+	var localIPs []net.IP
 	for _, iface := range ifaces {
 		if iface.Flags&net.FlagUp == 0 {
 			continue // interface down
@@ -77,8 +103,31 @@ func getLocalIP() string {
 			if ip == nil {
 				continue // not ipv4
 			}
+			localIPs = append(localIPs, ip)
+		}
+	}
+	return selectLocalIP(localIPs)
+}
+
+func selectLocalIP(ips []net.IP) string {
+	for _, ip := range ips {
+		if isUSBTetheringIP(ip) {
 			return ip.String()
 		}
 	}
+	if len(ips) > 0 {
+		return ips[0].String()
+	}
 	return ""
+}
+
+func isUSBTetheringIP(ip net.IP) bool {
+	tetheringRanges := []string{"192.168.42.0/24", "192.168.137.0/24", "172.20.10.0/28"}
+	for _, cidr := range tetheringRanges {
+		_, network, _ := net.ParseCIDR(cidr)
+		if network.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
