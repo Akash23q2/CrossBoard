@@ -67,8 +67,8 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := exec.Command("scrcpy", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
 	if err := cmd.Start(); err != nil {
 		fmt.Println("Error starting scrcpy:", err)
 		http.Error(w, "could not start scrcpy", http.StatusInternalServerError)
@@ -83,9 +83,7 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 			delete(scrcpyProcesses.active, cmd.Process.Pid)
 			scrcpyProcesses.Unlock()
 		}()
-		if err := cmd.Wait(); err != nil {
-			fmt.Println("scrcpy exited with error:", err)
-		}
+		_ = cmd.Wait()
 	}()
 
 	w.WriteHeader(http.StatusAccepted)
