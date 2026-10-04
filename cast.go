@@ -38,7 +38,7 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	screenOff, err := castScreenOff(r)
+	screenOff, isPotrait, err := castOptions(r)
 	if err != nil {
 		http.Error(w, "invalid screen_off value", http.StatusBadRequest)
 		return
@@ -50,12 +50,11 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var args []string
+	packageName := ""
 	switch {
 	case path == "screen":
-		args = scrcpyArgs(ip, "", screenOff)
 	case androidPackageName.MatchString(path):
-		args = scrcpyArgs(ip, path, screenOff)
+		packageName = path
 	default:
 		http.NotFound(w, r)
 		return
@@ -66,15 +65,17 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	scrcpyProcesses.Lock()
+	args := scrcpyArgs(ip, packageName, screenOff, isPotrait, len(scrcpyProcesses.active) > 0)
 	cmd := exec.Command("scrcpy", args...)
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
 	if err := cmd.Start(); err != nil {
+		scrcpyProcesses.Unlock()
 		fmt.Println("Error starting scrcpy:", err)
 		http.Error(w, "could not start scrcpy", http.StatusInternalServerError)
 		return
 	}
-	scrcpyProcesses.Lock()
 	scrcpyProcesses.active[cmd.Process.Pid] = cmd.Process
 	scrcpyProcesses.Unlock()
 	go func() {
@@ -90,35 +91,57 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("scrcpy started"))
 }
 
-func castScreenOff(r *http.Request) (bool, error) {
+func castOptions(r *http.Request) (bool, bool, error) {
 	var body struct {
 		ScreenOff *bool `json:"screen_off"`
+		IsPotrait  *bool `json:"is_potrait"`
 	}
 	if r.Body != nil {
 		decoder := json.NewDecoder(io.LimitReader(r.Body, 1<<20))
 		if err := decoder.Decode(&body); err != nil && !errors.Is(err, io.EOF) {
-			return false, err
+			return false, false, err
 		}
 	}
+	screenOff := body.ScreenOff != nil && *body.ScreenOff
+	isPotrait := body.IsPotrait != nil && *body.IsPotrait
+	var err error
 	if values, exists := r.URL.Query()["screen_off"]; exists {
-		if len(values) != 1 {
-			return false, fmt.Errorf("screen_off must be specified once")
+		screenOff, err = parseCastBool(values)
+		if err != nil {
+			return false, false, err
 		}
-		return strconv.ParseBool(values[0])
 	}
-	if body.ScreenOff != nil {
-		return *body.ScreenOff, nil
+	if values, exists := r.URL.Query()["is_potrait"]; exists {
+		isPotrait, err = parseCastBool(values)
+		if err != nil {
+			return false, false, err
+		}
 	}
-	return false, nil
+	return screenOff, isPotrait, nil
 }
 
-func scrcpyArgs(ip, packageName string, screenOff bool) []string {
+func parseCastBool(values []string) (bool, error) {
+	if len(values) != 1 {
+		return false, fmt.Errorf("boolean option must be specified once")
+	}
+	return strconv.ParseBool(values[0])
+}
+
+func scrcpyArgs(ip, packageName string, screenOff, isPotrait, noAudio bool) []string {
 	args := []string{"--tcpip=" + net.JoinHostPort(ip, scrcpyTCPPort)}
 	if packageName != "" {
-		args = append(args, "--new-display=1920x1080/240", "--start-app="+packageName)
+		if isPotrait {
+			args = append(args, "--new-display")
+		} else {
+			args = append(args, "--new-display=1920x1080/240")
+		}
+		args = append(args, "--start-app="+packageName)
 	}
 	if screenOff {
 		args = append(args, "-S")
+	}
+	if noAudio {
+		args = append(args, "--no-audio")
 	}
 	return args
 }
