@@ -13,7 +13,7 @@ import (
 
 const port = 5050
 
-const tunnelStartupTimeout = 5 * time.Second
+const tunnelStartupTimeout = 20 * time.Second
 
 func extractTunnelURL(output string) string {
 	re := regexp.MustCompile(`https://[a-zA-Z0-9-]+\.trycloudflare\.com`)

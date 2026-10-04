@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/go-vgo/robotgo"
 	"github.com/gorilla/websocket"
 )
 
@@ -24,12 +23,10 @@ type WSMessage struct {
 
 func remoteControlListener(conn *websocket.Conn) {
 	defer conn.Close()
-	// fmt.Println("remote control client connected")
 
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			// fmt.Println("remote control client disconnected")
 			break
 		}
 
@@ -46,39 +43,32 @@ func remoteControlListener(conn *websocket.Conn) {
 				fmt.Println("brightness control is not supported on Windows")
 				continue
 			}
-			robotgo.KeyTap(wsMessage.Value)
+			input.KeyTap(wsMessage.Value)
 
 		case "type":
 			// bulk text input
-			robotgo.Type(wsMessage.Value)
+			input.Type(wsMessage.Value)
 
 		case "mouse":
-			sw, sh := robotgo.GetScreenSize()
-			x := int(wsMessage.X * float64(sw-1) * wsMessage.Scale)
-			y := int(wsMessage.Y * float64(sh-1) * wsMessage.Scale)
-			// fmt.Printf("screen: %dx%d, cursor: %d,%d\n", sw, sh, x, y)
-			robotgo.Move(x, y)
+			// The client already applies SCALE to its position math, so the
+			// server must not scale again.
+			input.MoveAbs(clamp01(wsMessage.X), clamp01(wsMessage.Y))
 			if wsMessage.Click {
 				btn := wsMessage.Button
 				if btn == "" {
 					btn = "left"
 				}
-				robotgo.Click(btn, false)
+				input.Click(btn)
 			}
 
 		case "scroll":
-			robotgo.Scroll(0, wsMessage.DeltaY)
-			scrollHorizontal(wsMessage.DeltaX)
+			input.Scroll(wsMessage.DeltaX, wsMessage.DeltaY)
 
 		case "hotkey":
 			if len(wsMessage.Keys) > 0 {
 				main := wsMessage.Keys[len(wsMessage.Keys)-1]
 				mods := wsMessage.Keys[:len(wsMessage.Keys)-1]
-				args := make([]interface{}, len(mods))
-				for i, k := range mods {
-					args[i] = k
-				}
-				robotgo.KeyTap(main, args...)
+				input.KeyTap(main, mods...)
 			}
 
 		default:
