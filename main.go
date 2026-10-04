@@ -29,6 +29,7 @@ func main() {
 	http.HandleFunc("/getfile/", getFile)
 	http.HandleFunc("/listfiles", listFiles)
 	http.HandleFunc("/uploadfile", uploadFile)
+	http.HandleFunc("/cast/", castHandler)
 	http.HandleFunc("/", root) // Register "/" LAST so specific routes take priority
 
 	//start the server
