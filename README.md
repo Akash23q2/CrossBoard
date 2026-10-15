@@ -1,169 +1,157 @@
 <p align="center">
-  <img src="./crossboard_icon.ico" width="96" height="96" alt="CrossBoard Logo" />
+  <img src="./crossboard_icon.ico" width="88" alt="CrossBoard">
 </p>
 
-<svg width="100%" height="110" viewBox="0 0 1000 110" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 16px;">
-  <defs>
-    <linearGradient id="a" x1="0" x2="1" y1="0" y2="0">
-      <stop offset="0%" stop-color="#00ffe0"/>
-      <stop offset="100%" stop-color="#ff6b35"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="0" width="1000" height="110" rx="20" ry="20" fill="rgba(17,17,24,0.95)" />
-  <path fill="none" stroke="url(#a)" stroke-width="4" d="M 25 80 Q 80 20 150 80 T 275 80 T 400 80 T 525 80 T 650 80 T 775 80 T 900 80"/>
-  <text x="50%" y="60" dominant-baseline="middle" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="30" fill="#fff">CrossBoard - Stable, Fast, Minimal</text>
-</svg>
+<h1 align="center">CrossBoard</h1>
 
-# CrossBoard 
+<p align="center">
+  Share your clipboard, files, and desktop controls between your computer and mobile devices.
+</p>
 
-> CrossBoard is the only tool you need for clipboard syncing, remote input, and file transfer into your server from one tiny launcher.
+<p align="center">
+  <a href="https://github.com/Akash23q2/CrossBoard/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-00bfa6" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/built%20with-Go-00add8" alt="Built with Go">
+</p>
 
-![Status](https://img.shields.io/badge/status-POC%20%2F%20Ready-%2300ffea)
-![License](https://img.shields.io/badge/license-MIT-%23f0db4f)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-%23008cff)
-[![Download](https://img.shields.io/badge/download-crosboard.exe-%23ff6b35)](https://github.com/Akash23q2/CrossBoard/blob/master/crossboard.exe)
-Upload error: Failed to execute 'json' on 'Response': Unexpected end of JSON input
----
+CrossBoard runs a small server on your computer and provides a browser-based client for connected devices. Use it over your local network, through USB tethering, or from another network with an optional Cloudflare Tunnel. A companion Android app can integrate directly with the server for clipboard and device features.
 
-## 💥 TL;DR (because why not)
+## Features
 
-- `crossboard.exe`: remote clipboard + file browser + remote keyboard/mouse in one process
-- no phone app required, no same-network restrictions (phone on cellular + PC on wifi works)
-- Cloudflared is installed once; CrossBoard handles tunnel setup automatically
-- built in Go for stability and lightweight performance; 1 binary, no reporting/tracking garbage
-- made because every other clipboard share tool (including KDE/Win integration) felt broken, slow, clumsy, and intrusive
+- **Clipboard sync:** the Android app can sync the device clipboard seamlessly without requiring shortcut presses. Desktop users can also use `Alt+C` and `Alt+V`.
+- **Touchpad and remote input:** use the browser client for mouse and keyboard control; the Android app adds configurable multi-touch gestures.
+- **File transfer:** browse folders, upload files, and download files through the web client. Set the shared root folder in local settings; by default it is the folder containing the CrossBoard executable.
+- **Android app features:** launch Android apps directly, mirror the device screen, use configurable multi-touch gestures, and sync the clipboard seamlessly.
+- **Screen mirroring:** start scrcpy for the connected Android device with `Alt+K` when ADB over TCP is available.
+- **LAN and USB tethering:** CrossBoard prints a local URL and QR code. It prefers common USB-tethering IPv4 ranges when choosing a local address.
+- **Cross-network access:** optionally install `cloudflared` to get a temporary Cloudflare Tunnel URL. Connect multiple devices from different network seamlessly and share/access clipboard or files. Local network access continues if Cloudflare Tunnel is unavailable.
+- **Terminal dashboard:** view QR codes and recent logs, open help/settings, and use shortcuts while CrossBoard runs in an interactive terminal.
+- **Configurable server and device settings:** server/device ports, request timeouts, ADB timeout, and file-browser root are saved in the user configuration directory.
 
----
+## Quick start
 
-## 🆚 Comparison: KDE, Microsoft Phone Link, CrossBoard
+### Run a release binary
 
-| Feature | KDE Connect / GSConnect | Microsoft Phone Link | CrossBoard (this project) |
-|---|---|---|---|
-| Clipboard sync | Yes (local network) | Yes (requires Windows + mobile app) | Yes (web UI + tunnel) |
-| File transfer | Yes (local network, manual browse) | Yes (limited) | Yes (upload/download in app dir) |
-| Remote input | Yes (mouse/keyboard) | No | Yes (remote keyboard/mouse over websocket) |
-| Cross-network | No (same LAN) | Yes (if Windows device visible) | Yes (cloudflared tunnel, phone on cellular + PC on Wi-Fi) |
-| Setup complexity | Medium | Medium | Low (single binary, no install on phone) |
-| Privacy/control | Good, open source | Mixed, proprietary | Good, open source, local root dir locked |
+Download a binary from the [Releases](https://github.com/Akash23q2/CrossBoard/releases) page, then run it:
 
----
-
-## 🔧 Prereqs (because I never have time to set this up again)
-
-1. Install `cloudflared` first (required):
-   - Windows: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation
-   - Linux: `sudo apt install cloudflared` or: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation
-2. Install Go (1.20+)
-3. Clone project:
-```bash
-cd C:\stuffs\projects
-git clone https://github.com/youruser/crossboard.git
-cd crossboard
-```
-
----
-
-## 🚀 Build (Windows + Linux)
-
-### Linux
-```bash
-go build -o crossboard
+```sh
+# Linux
 ./crossboard
 ```
 
-### Windows
 ```powershell
-go build -o crossboard.exe
-./crossboard.exe
+# Windows
+.\crossboard.exe
 ```
 
----
+When the terminal dashboard appears, scan the LAN QR code with a device on the same network. If the device is connected over USB tethering, use the tethering URL printed by CrossBoard.
 
-## Start Cloudflare Tunnel (mandatory for remote)
+### Build from source
 
-`cloudflared` only needs to be installed; the local app handles the tunnel setup automatically (no manual login required).
+Install Go, clone the repository, and build:
 
-```bash
-# install cloudflared
-# on Linux: sudo apt install cloudflared (or download from Cloudflare)
-# on Windows: download installer from Cloudflare
-
-# run crossboard (it will auto-connect to cloudflared tunnel)
-./crossboard       # Linux
-./crossboard.exe   # Windows
+```sh
+git clone https://github.com/Akash23q2/CrossBoard.git
+cd CrossBoard
+go build -o crossboard .
+./crossboard
 ```
 
-Then access via generated tunnel URL and scan QR.
+On Windows:
 
----
-
-## Features (because life is too short for weak clipboard tools)
-
-- Remote clipboard get/send
-- Remote keyboard/mouse via websocket
-- File browser + folder navigation + back button
-- Cross Device File Sync [In the folder where exe is located]
-- Upload file to server (in-app directory only)
-- Download from executable dir only, safe path handling, no folder escape (`../`) abuse
-- Dark neon theme + minimal UI
-- QR generation for phone access (no app install needed)
-- Multiple devices supported; Go concurrency handles load neatly
-- Works when phone is on cellular and PC on Wi-Fi (truly cross-network)
-
----
-
-## 🛡️ Security design notes
-
-- `appHome` is locked to executable directory
-- `sanitizePath()` restricts listing + upload to `appHome`
-- binary serves only valid folder children
-- no folder path injection
-
----
-
-## 📦 File upload/download behavior
-
-### Browse files
-- click `BROWSE FILES`, hits `/listfiles?folder=.`
-- supports subfolder navigation via same endpoint
-
-### Download
-- `/getfile/<path>` (from app folder root)
-- linked by UI item
-
-### Upload
-- `/uploadfile` plus `folder=.` (current folder from UI state)
-- 500MB max in `r.ParseMultipartForm(500 << 20)`
-
----
-
-## 🚦 One-minute “no-life dev” quick start
-
-1. launch crossboard
-2. scan QR from phone
-3. everything works, optionally add more devices (the server handles it)
-
----
-
-## 🧪 Quick endpoint check
-
-```bash
-curl http://localhost:8888/health
-curl http://localhost:8888/listfiles?folder=.
-curl http://localhost:8888/getfile/file.go --output ./downloaded_file.go
-curl -F "file=@./README.md" -F "folder=." http://localhost:8888/uploadfile
+```powershell
+go build -o crossboard.exe .
+.\crossboard.exe
 ```
 
----
+## Connect across networks
 
-## 📥 Prebuilt binary
+For connections outside your LAN, install [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) on the computer running CrossBoard, then restart CrossBoard. It starts a temporary tunnel automatically when available; the tunnel URL is shown in the terminal dashboard. Press `t` to switch the displayed QR between the LAN and tunnel URLs.
 
-Download this directly (raw GitHub content):
+Without `cloudflared`, CrossBoard continues to serve over the LAN. A Cloudflare Tunnel provides access to the CrossBoard web server; it does **not** make a phone's private IP reachable from the computer for direct app-to-device traffic such as ADB or device clipboard endpoints.
 
-**https://raw.githubusercontent.com/youruser/crossboard/main/crossboard.exe**
+## Android app
 
----
+The companion Android app provides features beyond the browser client:
 
-## 🧾 License
+- Launch installed Android apps directly from CrossBoard.
+- Mirror the Android screen using scrcpy.
+- Use configurable multi-touch gestures for remote control.
+- Keep the phone and computer clipboards in sync automatically, without pressing a shortcut for each transfer.
 
-MIT
+Install `adb` (Android platform-tools) and [scrcpy](https://github.com/Genymobile/scrcpy/blob/master/doc/README.md#installation) on the CrossBoard computer and enable ADB over TCP on the Android device for screen mirroring. Device availability and network reachability are required for app control and clipboard sync.
+
+## Desktop shortcuts
+
+These shortcuts are handled by the computer running CrossBoard:
+
+| Shortcut | Action |
+| --- | --- |
+| `Alt+C` | Send Ctrl+Shift+C to copy selected text in the focused PC app, then send it to the registered app device. |
+| `Alt+V` | Fetch device clipboard text, write it to the PC clipboard, then paste into the focused PC app. |
+| `Alt+K` | Connect to the registered app device over ADB TCP port `2004` and start scrcpy. |
+
+Keep the relevant PC application focused when using clipboard shortcuts. `Alt+C` sends Ctrl+Shift+C, avoiding Ctrl+C's interrupt behavior in terminals; the focused application must support Ctrl+Shift+C to copy selected text. The device must return clipboard data before the configured request timeout for `Alt+V` to trigger the paste.
+
+For scrcpy, install both `adb` (Android platform-tools) and [scrcpy](https://github.com/Genymobile/scrcpy/blob/master/doc/README.md#installation) on the CrossBoard computer. The app device must have ADB-over-TCP enabled and reachable on port `2004`.
+
+## Browser controls and gestures
+
+Open the CrossBoard URL from a mobile device to use the browser client. In remote-control mode:
+
+| Gesture | Action |
+| --- | --- |
+| One-finger move | Move the PC pointer |
+| One-finger tap | Left-click |
+| Two-finger tap | Right-click |
+| Two-finger swipe | Scroll |
+| Three- or four-finger swipe | Trigger a configurable keyboard shortcut |
+
+Gesture shortcuts can be edited in the remote-control panel. Enter a key or combination such as `alt+tab` or `win+n`, or use `off` to disable a gesture. Gesture mappings are saved in that browser's local storage.
+
+## File transfer
+
+Use the web client's file browser to navigate folders, download files, and upload files. The file-browser root is configurable in Settings, opened with `s` from the terminal dashboard. By default, the root is the directory containing the CrossBoard executable. Only choose a directory you intend to share: its contents are made available to connected clients.
+
+The server confines file operations to the configured root and rejects paths that escape it, including symlinks leading outside the root.
+
+## Terminal dashboard
+
+In an interactive terminal, CrossBoard opens a dashboard with the LAN QR code visible by default. Press:
+
+| Key | Action |
+| --- | --- |
+| `h` | Open the web help page |
+| `?` | Show global desktop shortcuts |
+| `t` | Toggle between LAN and Cloudflare QR codes |
+| `r` | Redraw the dashboard |
+| `s` | Open local settings |
+| `l` | Open recent logs |
+| `k` | Start scrcpy for the registered app device |
+| `q` | Exit CrossBoard |
+
+Dashboard keys work while the terminal is focused. Non-interactive launches print regular logs instead.
+
+## Settings and configuration
+
+Settings are available from the terminal dashboard with `s` and are restricted to requests from the CrossBoard computer. They include:
+
+- CrossBoard server port (default `5050`; restart required after changing)
+- File-browser root folder
+- App-device HTTP port (default `80`)
+- App-device request timeout
+- Cloudflare Tunnel startup timeout
+- ADB connection timeout
+
+Configuration is saved as `config.json` under the operating system's user configuration directory in `CrossBoard` (typically `~/.config/CrossBoard/config.json` on Linux).
+
+## Network and permissions
+
+Devices on the same LAN can connect using the printed local URL. For USB tethering, connect the phone to the computer with USB tethering enabled and use the URL/QR printed for that network interface. CrossBoard prioritizes common USB tethering address ranges when selecting its local IPv4 address.
+
+If a firewall blocks access, allow inbound TCP to the configured CrossBoard server port from your trusted private network only. Do not expose the server port publicly.
+
+On Linux, global keyboard shortcuts require read access to keyboard event devices under `/dev/input`. One common setup is adding the CrossBoard user to the `input` group and logging out and back in. This grants system-wide keyboard-event access, so only do this for a trusted user. On macOS, grant the terminal or CrossBoard Accessibility permission if the native keyboard hook is blocked.
+
+## License
+
+CrossBoard is licensed under the [MIT License](LICENSE).

@@ -2,35 +2,71 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"html"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
-// sanitizePath ensures the path is within appHome and prevents directory traversal
+// sanitizePath ensures the path is within the configured file-browser directory.
 func sanitizePath(reqPath string) (string, error) {
-	if reqPath == "" || reqPath == "." {
-		return appHome, nil
+	root, err := fileBrowserRoot()
+	if err != nil {
+		return "", err
 	}
-	// Join with appHome and resolve to absolute clean path
-	fullPath := filepath.Clean(filepath.Join(appHome, reqPath))
-	appHomeClean := filepath.Clean(appHome)
+	return sanitizePathInRoot(root, reqPath)
+}
 
-	// Make sure it's within appHome (check exact match or prefix with separator)
-	if fullPath != appHomeClean && !strings.HasPrefix(fullPath+string(os.PathSeparator), appHomeClean+string(os.PathSeparator)) {
+func fileBrowserRoot() (string, error) {
+	root := currentAppConfig().FileBrowserDir
+	if root == "" {
+		root = appHome
+	}
+	root, err := filepath.Abs(filepath.Clean(root))
+	if err != nil {
+		return "", fmt.Errorf("resolve file browser directory: %w", err)
+	}
+	root, err = filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("resolve file browser directory: %w", err)
+	}
+	return root, nil
+}
+
+func sanitizePathInRoot(root, reqPath string) (string, error) {
+	if reqPath == "" || reqPath == "." {
+		return root, nil
+	}
+	fullPath := filepath.Clean(filepath.Join(root, reqPath))
+
+	if !isPathWithin(root, fullPath) {
 		return "", fmt.Errorf("access denied")
 	}
-	return fullPath, nil
+	resolved, err := filepath.EvalSymlinks(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("resolve requested path: %w", err)
+	}
+	if !isPathWithin(root, resolved) {
+		return "", fmt.Errorf("access denied")
+	}
+	return resolved, nil
+}
+
+func isPathWithin(root, path string) bool {
+	relative, err := filepath.Rel(filepath.Clean(root), filepath.Clean(path))
+	return err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator)) &&
+		!filepath.IsAbs(relative)
 }
 
 func getFile(w http.ResponseWriter, r *http.Request) {
-	filePath := r.URL.Path
-	filePath = strings.TrimPrefix(filePath, "/getfile/")
-	// URL decode the path
-	decodedPath, err := url.QueryUnescape(filePath)
+	filePath := strings.TrimPrefix(r.URL.EscapedPath(), "/getfile/")
+	decodedPath, err := url.PathUnescape(filePath)
 	if err != nil {
 		http.Error(w, "Invalid path", 400)
 		return
@@ -51,14 +87,19 @@ func getFile(w http.ResponseWriter, r *http.Request) {
 	_ = info // use info to avoid unused variable warning
 
 	// Set headers to force download
-	w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(fullPath)+"\"")
+	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": filepath.Base(fullPath)}))
 	w.Header().Set("Content-Type", "application/octet-stream")
 	http.ServeFile(w, r, fullPath)
 }
 
 func listFiles(w http.ResponseWriter, r *http.Request) {
+	root, err := fileBrowserRoot()
+	if err != nil {
+		http.Error(w, "File browser folder is unavailable", http.StatusInternalServerError)
+		return
+	}
 	folder := r.URL.Query().Get("folder")
-	path, err := sanitizePath(folder)
+	path, err := sanitizePathInRoot(root, folder)
 	if err != nil {
 		http.Error(w, "Access denied", 403)
 		return
@@ -70,8 +111,7 @@ func listFiles(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html")
 	w.Write([]byte(`<ul>`))
-	// Get relative path from appHome
-	relPath, _ := filepath.Rel(filepath.Clean(appHome), filepath.Clean(path))
+	relPath, _ := filepath.Rel(filepath.Clean(root), filepath.Clean(path))
 
 	for _, entry := range entries {
 		name := entry.Name()
@@ -86,11 +126,14 @@ func listFiles(w http.ResponseWriter, r *http.Request) {
 
 		// Convert to forward slashes for web
 		subPath = filepath.ToSlash(subPath)
+		displayName := html.EscapeString(name)
 
 		if entry.IsDir() {
-			w.Write([]byte(`<li><a href="#" class="file-link-dir" onclick="browseFiles('` + subPath + `'); return false;">📁 ` + name + `/</a></li>`))
+			onclick := html.EscapeString("browseFiles(" + strconv.Quote(subPath) + "); return false;")
+			w.Write([]byte(`<li><a href="#" class="file-link-dir" onclick="` + onclick + `">📁 ` + displayName + `/</a></li>`))
 		} else {
-			w.Write([]byte(`<li><a href="/getfile/` + subPath + `" class="file-link" download>📄 ` + name + `</a></li>`))
+			escapedPath := html.EscapeString(strings.Join(escapeURLPathSegments(subPath), "/"))
+			w.Write([]byte(`<li><a href="/getfile/` + escapedPath + `" class="file-link" download>📄 ` + displayName + `</a></li>`))
 		}
 	}
 	w.Write([]byte(`</ul>`))
@@ -118,7 +161,19 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	destPath := filepath.Join(path, handler.Filename)
+	filename := filepath.Base(strings.ReplaceAll(handler.Filename, "\\", "/"))
+	if filename == "." || filename == string(filepath.Separator) || filename == "" {
+		http.Error(w, "Invalid file name", http.StatusBadRequest)
+		return
+	}
+	destPath := filepath.Join(path, filename)
+	if info, err := os.Lstat(destPath); err == nil && info.Mode()&os.ModeSymlink != 0 {
+		http.Error(w, "Cannot overwrite a symbolic link", http.StatusForbidden)
+		return
+	} else if err != nil && !os.IsNotExist(err) {
+		http.Error(w, "Could not inspect destination", http.StatusInternalServerError)
+		return
+	}
 	dst, err := os.Create(destPath)
 	if err != nil {
 		http.Error(w, "Failed to create file", http.StatusInternalServerError)
@@ -131,5 +186,16 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"success": true, "message": "File uploaded: %s"}`, handler.Filename)
+	_ = json.NewEncoder(w).Encode(struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+	}{true, "File uploaded: " + filename})
+}
+
+func escapeURLPathSegments(path string) []string {
+	segments := strings.Split(path, "/")
+	for index, segment := range segments {
+		segments[index] = url.PathEscape(segment)
+	}
+	return segments
 }

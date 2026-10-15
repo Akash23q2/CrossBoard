@@ -79,6 +79,9 @@
 
   .status-pill.ok   { color: var(--success); border-color: var(--success); }
   .status-pill.fail { color: var(--error);   border-color: var(--error); }
+  .header-actions { display:flex; align-items:center; gap:10px; }
+  .header-link { color:var(--accent); border:1px solid var(--border); border-radius:3px; padding:7px 12px; font-size:.72rem; text-decoration:none; letter-spacing:1px; }
+  .header-link:hover { border-color:var(--accent); color:#fff; }
 
   .dot {
     width: 6px; height: 6px;
@@ -676,9 +679,12 @@
 
   <header>
     <div class="logo">Cross<span>Board</span></div>
-    <div class="status-pill" id="statusPill">
-      <div class="dot"></div>
-      <span id="statusText">checking...</span>
+    <div class="header-actions">
+      <a class="header-link" href="/help">HELP</a>
+      <div class="status-pill" id="statusPill">
+        <div class="dot"></div>
+        <span id="statusText">checking...</span>
+      </div>
     </div>
   </header>
 
@@ -822,7 +828,7 @@
   </div>
 
   <!-- FILE BROWSER -->
-  <div class="card">
+  <div class="card" id="fileBrowser">
     <div class="card-label">// file browser</div>
     <p style="font-size:0.82rem; color:var(--muted); margin-bottom:14px;">Browse, download, and upload files on the server.</p>
     <div style="display: flex; gap: 10px; margin-bottom: 14px;">
@@ -836,7 +842,6 @@
     </div>
     <div id="fileList" class="content-box empty" style="margin-top:14px; list-style: none;">— no files listed yet —</div>
   </div>
-
 
 <div id="toast"></div>
 <footer>CROSSBOARD · LOCAL CLIPBOARD BRIDGE</footer>
@@ -1461,6 +1466,10 @@
 
   checkHealth();
   setInterval(checkHealth, 15000);
+  if (window.location.hash === '#files') {
+    browseFiles('.');
+    document.getElementById('fileBrowser').scrollIntoView();
+  }
 </script>
 </body>
 </html>

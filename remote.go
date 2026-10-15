@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"runtime"
 
 	"github.com/gorilla/websocket"
@@ -32,7 +31,7 @@ func remoteControlListener(conn *websocket.Conn) {
 
 		var wsMessage WSMessage
 		if err := json.Unmarshal(msg, &wsMessage); err != nil {
-			fmt.Println("invalid message:", err)
+			appLogf("invalid remote-control message: %v", err)
 			continue
 		}
 
@@ -40,7 +39,7 @@ func remoteControlListener(conn *websocket.Conn) {
 		case "key":
 			// special keys: "enter", "backspace", "up", "down", "left", "right", "escape", "tab"
 			if runtime.GOOS == "windows" && (wsMessage.Value == "brightness_up" || wsMessage.Value == "brightness_down") {
-				fmt.Println("brightness control is not supported on Windows")
+				appLogf("brightness control is not supported on Windows")
 				continue
 			}
 			input.KeyTap(wsMessage.Value)
@@ -72,7 +71,7 @@ func remoteControlListener(conn *websocket.Conn) {
 			}
 
 		default:
-			fmt.Println("unknown message type:", wsMessage.Type)
+			appLogf("unknown remote-control message type: %s", wsMessage.Type)
 			continue
 		}
 	}

@@ -25,14 +25,14 @@ import (
 func pickBackend() inputBackend {
 	switch strings.ToLower(os.Getenv("CROSSBOARD_INPUT")) {
 	case "x11", "robotgo":
-		fmt.Println("input: using X11 (robotgo) backend (forced)")
+		appLogf("input: using X11 (robotgo) backend (forced)")
 		return robotgoBackend{}
 	case "uinput":
 		if b, err := newUinputBackend(); err == nil {
-			fmt.Println("input: using /dev/uinput backend (forced)")
+			appLogf("input: using /dev/uinput backend (forced)")
 			return b
 		} else {
-			fmt.Println("input: forced uinput backend failed:", err)
+			appLogf("input: forced uinput backend failed: %v", err)
 			printUinputHelp()
 			return robotgoBackend{}
 		}
@@ -41,16 +41,16 @@ func pickBackend() inputBackend {
 	if isWaylandSession() {
 		b, err := newUinputBackend()
 		if err == nil {
-			fmt.Println("input: Wayland session detected, using /dev/uinput backend")
+			appLogf("input: Wayland session detected, using /dev/uinput backend")
 			return b
 		}
-		fmt.Println("input: Wayland session detected but /dev/uinput is not usable:", err)
+		appLogf("input: Wayland session detected but /dev/uinput is not usable: %v", err)
 		printUinputHelp()
-		fmt.Println("input: falling back to X11 backend (mouse will not work under Wayland)")
+		appLogf("input: falling back to X11 backend (mouse will not work under Wayland)")
 		return robotgoBackend{}
 	}
 
-	fmt.Println("input: X11 session, using robotgo backend")
+	appLogf("input: X11 session, using robotgo backend")
 	return robotgoBackend{}
 }
 
@@ -63,7 +63,7 @@ func isWaylandSession() bool {
 }
 
 func printUinputHelp() {
-	fmt.Println(`input: one-time setup so your user can create virtual input devices:
+	appLogf(`input: one-time setup so your user can create virtual input devices:
   echo 'KERNEL=="uinput", SUBSYSTEM=="misc", MODE="0660", TAG+="uaccess", OPTIONS+="static_node=uinput"' | sudo tee /etc/udev/rules.d/99-crossboard-uinput.rules
   echo uinput | sudo tee /etc/modules-load.d/uinput.conf
   sudo modprobe uinput && sudo udevadm control --reload-rules && sudo udevadm trigger
@@ -296,14 +296,14 @@ func (b *uinputBackend) Scroll(dx, dy int) {
 func (b *uinputBackend) KeyTap(key string, mods ...string) {
 	code, ok := lookupKey(key)
 	if !ok {
-		fmt.Printf("input: unknown key %q\n", key)
+		appLogf("input: unknown key %q", key)
 		return
 	}
 	var modCodes []uint16
 	for _, m := range mods {
 		mc, ok := modKeys[strings.ToLower(m)]
 		if !ok {
-			fmt.Printf("input: unknown modifier %q\n", m)
+			appLogf("input: unknown modifier %q", m)
 			return
 		}
 		modCodes = append(modCodes, mc)
@@ -329,7 +329,7 @@ func (b *uinputBackend) Type(text string) {
 	for _, r := range text {
 		ks, ok := asciiKeys[r]
 		if !ok {
-			fmt.Printf("input: cannot type %q with the uinput backend (ASCII only)\n", r)
+			appLogf("input: cannot type %q with the uinput backend (ASCII only)", r)
 			continue
 		}
 		if ks.shift {

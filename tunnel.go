@@ -11,32 +11,32 @@ import (
 	"time"
 )
 
-const port = 5050
-
-const tunnelStartupTimeout = 20 * time.Second
-
 func extractTunnelURL(output string) string {
 	re := regexp.MustCompile(`https://[a-zA-Z0-9-]+\.trycloudflare\.com`)
 	return re.FindString(output)
 }
 
 func handleTunneling() (string, string) {
-	url := fmt.Sprintf("http://localhost:%d", port)
+	url := fmt.Sprintf("http://localhost:%d", currentAppConfig().ServerPort)
 	lan := ""
 	if ip := getLocalIP(); ip != "" {
-		lan = fmt.Sprintf("http://%s:%d", ip, port)
+		lan = fmt.Sprintf("http://%s:%d", ip, currentAppConfig().ServerPort)
 	}
 
+	if _, err := exec.LookPath("cloudflared"); err != nil {
+		appLogf("cloudflared not found; skipping Cloudflare tunnel, local network access remains available")
+		return "", lan
+	}
 	cmd := exec.Command("cloudflared", "tunnel", "--url", url)
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		fmt.Println(err)
+		appLogf("could not capture cloudflared output: %v", err)
 		return "", lan
 	}
 
 	if err := cmd.Start(); err != nil {
-		fmt.Println(err)
+		appLogf("could not start cloudflared: %v", err)
 		return "", lan
 	}
 
@@ -53,10 +53,12 @@ func handleTunneling() (string, string) {
 		if !foundURL {
 			tunnelURL <- ""
 		}
-		_ = cmd.Wait()
+		if err := cmd.Wait(); err != nil {
+			appLogf("cloudflared stopped: %v", err)
+		}
 	}()
 
-	timer := time.NewTimer(tunnelStartupTimeout)
+	timer := time.NewTimer(time.Duration(currentAppConfig().TunnelStartupTimeout) * time.Second)
 	defer timer.Stop()
 	select {
 	case url := <-tunnelURL:
@@ -65,7 +67,10 @@ func handleTunneling() (string, string) {
 		}
 		return url, lan
 	case <-timer.C:
-		_ = cmd.Process.Kill()
+		if err := cmd.Process.Kill(); err != nil {
+			appLogf("could not stop cloudflared after startup timeout: %v", err)
+		}
+		appLogf("cloudflared tunnel startup timed out")
 		return "", lan
 	}
 }

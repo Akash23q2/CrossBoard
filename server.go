@@ -4,7 +4,6 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"io"
 	"net/http"
 	"runtime"
@@ -27,7 +26,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	// Upgrade the HTTP connection to a WebSocket connection
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("Error upgrading:", err)
+		appLogf("websocket upgrade failed: %v", err)
 		return
 	}
 	remoteControlListener(conn)
@@ -52,18 +51,21 @@ func getPlatform(w http.ResponseWriter, r *http.Request) {
 }
 
 func getClipboard(w http.ResponseWriter, r *http.Request) {
-	content := readClipboard()
-	// fmt.Println("pasted clipboard content")
+	content, err := readClipboard()
+	if err != nil {
+		http.Error(w, "could not read clipboard", http.StatusInternalServerError)
+		return
+	}
 	io.WriteString(w, content)
 }
 
 func sendClipboard(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "copied content to clipboard")
-	content := r.URL.Query().Get("content")
-	if content == "" {
-		// fmt.Println("nothing to copy")
-	} else {
-		// fmt.Println("copied content", content)
-		writeClipboard(content)
+	content, exists := r.URL.Query()["content"]
+	if exists && len(content) > 0 && content[0] != "" {
+		if err := writeClipboard(content[0]); err != nil {
+			http.Error(w, "could not write clipboard", http.StatusInternalServerError)
+			return
+		}
 	}
+	io.WriteString(w, "copied content to clipboard")
 }

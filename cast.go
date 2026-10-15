@@ -60,11 +60,19 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ensureADBConnected(ip); err != nil {
-		writeCastError(w, http.StatusServiceUnavailable, "adb_not_connected", err.Error())
+	if err := startScrcpy(ip, packageName, screenOff, isPotrait); err != nil {
+		writeCastError(w, http.StatusServiceUnavailable, "scrcpy_start_failed", err.Error())
 		return
 	}
 
+	w.WriteHeader(http.StatusAccepted)
+	_, _ = w.Write([]byte("scrcpy started"))
+}
+
+func startScrcpy(ip, packageName string, screenOff, isPotrait bool) error {
+	if err := ensureADBConnected(ip); err != nil {
+		return fmt.Errorf("ADB connection failed: %w", err)
+	}
 	scrcpyProcesses.Lock()
 	args := scrcpyArgs(ip, packageName, screenOff, isPotrait, len(scrcpyProcesses.active) > 0)
 	cmd := exec.Command("scrcpy", args...)
@@ -72,9 +80,8 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 	cmd.Stderr = io.Discard
 	if err := cmd.Start(); err != nil {
 		scrcpyProcesses.Unlock()
-		fmt.Println("Error starting scrcpy:", err)
-		http.Error(w, "could not start scrcpy", http.StatusInternalServerError)
-		return
+		appLogf("could not start scrcpy: %v", err)
+		return err
 	}
 	scrcpyProcesses.active[cmd.Process.Pid] = cmd.Process
 	scrcpyProcesses.Unlock()
@@ -86,15 +93,13 @@ func castHandler(w http.ResponseWriter, r *http.Request) {
 		}()
 		_ = cmd.Wait()
 	}()
-
-	w.WriteHeader(http.StatusAccepted)
-	_, _ = w.Write([]byte("scrcpy started"))
+	return nil
 }
 
 func castOptions(r *http.Request) (bool, bool, error) {
 	var body struct {
 		ScreenOff *bool `json:"screen_off"`
-		IsPotrait  *bool `json:"is_potrait"`
+		IsPotrait *bool `json:"is_potrait"`
 	}
 	if r.Body != nil {
 		decoder := json.NewDecoder(io.LimitReader(r.Body, 1<<20))
@@ -148,7 +153,7 @@ func scrcpyArgs(ip, packageName string, screenOff, isPotrait, noAudio bool) []st
 
 func ensureADBConnected(ip string) error {
 	device := net.JoinHostPort(ip, scrcpyTCPPort)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(currentAppConfig().ADBConnectTimeout)*time.Second)
 	defer cancel()
 
 	connect := exec.CommandContext(ctx, "adb", "connect", device)
